@@ -1,0 +1,303 @@
+<html>
+  <head>
+    <meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>开源项目——数据中心平台 | yjq.wiki</title>
+<meta name="description" content="it's never too old to learn" />
+<link rel="shortcut icon" href="https://netyjq.github.io/favicon.ico?v=1575944462433">
+<link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.2/css/all.css" integrity="sha384-fnmOCqbTlWIlj8LyTjo7mOUStjsKC4pOpQbqyi7RrhN7udi9RwhKkMHpvLbHG9Sr" crossorigin="anonymous">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.10.0/katex.min.css">
+<link rel="stylesheet" href="https://netyjq.github.io/styles/main.css">
+
+<script src="https://cdn.bootcss.com/highlight.js/9.12.0/highlight.min.js"></script>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Droid+Serif:400,700">
+
+
+
+  </head>
+  <body>
+    <div class="main">
+      <div class="main-content">
+        <div class="site-header">
+  <a href="https://netyjq.github.io">
+  <img class="avatar" src="https://netyjq.github.io/images/avatar.png?v=1575944462433" alt="">
+  </a>
+  <h1 class="site-title">
+    yjq.wiki
+  </h1>
+  <p class="site-description">
+    it's never too old to learn
+  </p>
+  <div class="menu-container">
+    
+      
+        <a href="/" class="menu">
+          首页
+        </a>
+      
+    
+      
+        <a href="/archives" class="menu">
+          归档
+        </a>
+      
+    
+      
+        <a href="/tags" class="menu">
+          标签
+        </a>
+      
+    
+      
+        <a href="/post/about" class="menu">
+          关于
+        </a>
+      
+    
+  </div>
+  <div class="social-container">
+    
+      
+    
+      
+    
+      
+    
+      
+    
+      
+    
+  </div>
+</div>
+
+        <div class="post-detail">
+          <article class="post">
+            <h2 class="post-title">
+              开源项目——数据中心平台
+            </h2>
+            <div class="post-info">
+              <span>
+                2019-06-14
+              </span>
+              <span>
+                4 min read
+              </span>
+              
+                <a href="https://netyjq.github.io/tag/Z9ZclCfk3n" class="post-tag">
+                  # 个人开源项目
+                </a>
+              
+                <a href="https://netyjq.github.io/tag/PCEYG17H6J" class="post-tag">
+                  # Github
+                </a>
+              
+            </div>
+            
+            <div class="post-content-wrapper">
+              <div class="post-content">
+                <h2 id="项目简介">项目简介</h2>
+<p>一个能实现任意动态sql执行、统一管理、异常监控的数据查询平台。</p>
+<p>https://github.com/netyjq/data-center</p>
+<h2 id="背景">背景</h2>
+<p>现在业务方每次有数据查询需求，就需要数据中心配合做sql查询，同时提供RPC接口返回DTO数据结构。伸缩性较差，人力成本高。</p>
+<h2 id="目标">目标</h2>
+<p>实现一套现代化的数据中心平台，业务方自行维护sql，无需数据中心耦合业务需求。</p>
+<h2 id="核心需求">核心需求</h2>
+<ol>
+<li>SQL管理</li>
+<li>监控告警</li>
+<li>权限管理</li>
+<li>报表统计</li>
+<li>...</li>
+</ol>
+<h2 id="方案">方案</h2>
+<h3 id="设计图">设计图</h3>
+<figure data-type="image" tabindex="1"><img src="http://ww1.sinaimg.cn/large/c9025ee6ly1g2be63rlb4j20l40kpgm4.jpg" alt=""></figure>
+<h3 id="技术方案">技术方案</h3>
+<h4 id="dubborpc-freemarker解析sql-mybatis执行sql">Dubbo(RPC) + Freemarker(解析SQL) + Mybatis(执行SQL)</h4>
+<p>假设下面的sql需要根据parentId和name动态查询，其中parent_id和name有值传递过来就参与查询，否则不查询</p>
+<pre><code class="language-sql">SELECT * from unit_info where and parent_id = #{parentId} and name = #{name};
+</code></pre>
+<p>那么需要在数据中心配置下面的sql模板：</p>
+<pre><code class="language-sql">SELECT * from unit_info where 1=1 &lt;#if parentId??&gt;and parent_id = #{parentId}&lt;/#if&gt; &lt;#if name?? &amp;&amp; name != ''&gt;and name = #{name}&lt;/#if&gt;
+</code></pre>
+<p>接下来业务方通过Dubbo调用了数据中心的RPC接口，并传递了参数parentId=1，最终sql被解析并被mybatis执行。</p>
+<pre><code class="language-sql">SELECT * from unit_info where 1=1 and parent_id = 1
+</code></pre>
+<h4 id="表结构设计">表结构设计</h4>
+<ul>
+<li>user_info 用户信息表</li>
+<li>user_group 用户组</li>
+<li>user_group_mapping 用户、组关联表</li>
+<li>app_info 应用表</li>
+<li>app_user_mapping 应用和用户关联表</li>
+<li>sql_template sql模板表</li>
+<li>sql_operation_record sql操作记录表</li>
+<li>api_call_record api调用记录表 <strong>分多表</strong></li>
+<li>alarm_history 告警记录表 <strong>分多表</strong></li>
+<li>alarm_config 告警配置表</li>
+</ul>
+<figure data-type="image" tabindex="2"><img src="https://raw.githubusercontent.com/netyjq/data-center/master/script/table.jpg" alt=""></figure>
+<h4 id="项目模块">项目模块</h4>
+<ol>
+<li>data-center-admin 管理员后台 部署形式：war</li>
+<li>data-center-service 提供业务接口  部署形式war</li>
+<li>data-center-client 封装接口给业务方 部署形式jar</li>
+<li>script sql脚本</li>
+</ol>
+<h3 id="业务流程">业务流程</h3>
+<ol>
+<li>业务方申请应用，得到appId</li>
+<li>配置sql，包含<strong>sqltext</strong>、<strong>是否分页</strong>、<strong>表字段映射</strong>，系统自带校验和测试功能。</li>
+<li>业务方集成数据中心client jar，配置duboo接口，调用api并传递对应参数</li>
+<li>数据中心响应请求，异步记录此次调用信息。</li>
+</ol>
+<h3 id="sql管理">SQL管理</h3>
+<p>供业务方进行sql模板的配置(如果动态条件则需要使用freemarker编写sql模板) 、sql的模拟测试、上下架管理等功能。</p>
+<h3 id="监控告警">监控告警</h3>
+<p>支持2种形式的告警：<strong>ERROR_COUNT</strong>以及<strong>SLOW_COUNT</strong>。系统通过定时扫描，对符合条件的查询以邮件的形式发送到用户或组。</p>
+<h3 id="报表统计">报表统计</h3>
+<p>数据中心会记录每次的调用请求，为日后报表统计类业务做铺垫。同时Admin后台也将以图形的方式展现部分维度下的Top调用量情况。</p>
+<h3 id="权限管理">权限管理</h3>
+<ol>
+<li>用户组与用户间的关系 —— 用于告警发送邮件以及SQL管理权限的判定</li>
+<li>用户组与应用的关系 —— 用于告警发送邮件</li>
+<li>应用与sql间的关系 —— 用于应用方调用权限的判定</li>
+</ol>
+<h2 id="预览">预览</h2>
+<figure data-type="image" tabindex="3"><img src="https://raw.githubusercontent.com/netyjq/data-center/master/script/login.png" alt="登录页"></figure>
+<figure data-type="image" tabindex="4"><img src="https://raw.githubusercontent.com/netyjq/data-center/master/script/index.png" alt="首页"></figure>
+<h2 id="风险点">风险点</h2>
+<ol>
+<li>负载风险：宕机引发整体服务不可用</li>
+<li>流控风险：某个业务查询时间过长过高影响其它业务正常运行</li>
+<li>安全风险：大表查询未limit、未走索引、全表扫描；未按需查询、大字段未过滤；锁表；SQL注入：Update、Delete、Truncate等</li>
+<li>其它待补充</li>
+</ol>
+
+              </div>
+              <div class="toc-container">
+                <ul class="markdownIt-TOC">
+<li>
+<ul>
+<li><a href="#%E9%A1%B9%E7%9B%AE%E7%AE%80%E4%BB%8B">项目简介</a></li>
+<li><a href="#%E8%83%8C%E6%99%AF">背景</a></li>
+<li><a href="#%E7%9B%AE%E6%A0%87">目标</a></li>
+<li><a href="#%E6%A0%B8%E5%BF%83%E9%9C%80%E6%B1%82">核心需求</a></li>
+<li><a href="#%E6%96%B9%E6%A1%88">方案</a>
+<ul>
+<li><a href="#%E8%AE%BE%E8%AE%A1%E5%9B%BE">设计图</a></li>
+<li><a href="#%E6%8A%80%E6%9C%AF%E6%96%B9%E6%A1%88">技术方案</a>
+<ul>
+<li><a href="#dubborpc-freemarker%E8%A7%A3%E6%9E%90sql-mybatis%E6%89%A7%E8%A1%8Csql">Dubbo(RPC) + Freemarker(解析SQL) + Mybatis(执行SQL)</a></li>
+<li><a href="#%E8%A1%A8%E7%BB%93%E6%9E%84%E8%AE%BE%E8%AE%A1">表结构设计</a></li>
+<li><a href="#%E9%A1%B9%E7%9B%AE%E6%A8%A1%E5%9D%97">项目模块</a></li>
+</ul>
+</li>
+<li><a href="#%E4%B8%9A%E5%8A%A1%E6%B5%81%E7%A8%8B">业务流程</a></li>
+<li><a href="#sql%E7%AE%A1%E7%90%86">SQL管理</a></li>
+<li><a href="#%E7%9B%91%E6%8E%A7%E5%91%8A%E8%AD%A6">监控告警</a></li>
+<li><a href="#%E6%8A%A5%E8%A1%A8%E7%BB%9F%E8%AE%A1">报表统计</a></li>
+<li><a href="#%E6%9D%83%E9%99%90%E7%AE%A1%E7%90%86">权限管理</a></li>
+</ul>
+</li>
+<li><a href="#%E9%A2%84%E8%A7%88">预览</a></li>
+<li><a href="#%E9%A3%8E%E9%99%A9%E7%82%B9">风险点</a></li>
+</ul>
+</li>
+</ul>
+
+              </div>
+            </div>
+          </article>
+        </div>
+
+        
+          <div class="next-post">
+            <div class="next">下一篇</div>
+            <a href="https://netyjq.github.io/post/mybatis-dynamic-sql-by-freemarker">
+              <h3 class="post-title">
+                使用freemarker实现mybatis动态sql
+              </h3>
+            </a>
+          </div>
+        
+
+        
+          
+            <link rel="stylesheet" href="https://unpkg.com/gitalk/dist/gitalk.css">
+<script src="https://unpkg.com/gitalk/dist/gitalk.min.js"></script>
+
+<div id="gitalk-container"></div>
+
+<script>
+
+  var gitalk = new Gitalk({
+    clientID: '5d6b9c9336c7edc32dce',
+    clientSecret: 'db95541cd744854feb3628bf9efea21b5fad428d',
+    repo: 'netyjq.github.io',
+    owner: 'netyjq',
+    admin: ['netyjq'],
+    id: (location.pathname).substring(0, 49),      // Ensure uniqueness and length less than 50
+    distractionFreeMode: false  // Facebook-like distraction free mode
+  })
+
+  gitalk.render('gitalk-container')
+
+</script>
+
+          
+
+          
+        
+
+        <div class="site-footer">
+  Powered by <a href="https://github.com/netyjq/" target="_blank">netyjq</a> | 
+  <a class="rss" href="https://netyjq.github.io/atom.xml" target="_blank">RSS</a>
+</div>
+
+<script>
+  hljs.initHighlightingOnLoad()
+
+  let mainNavLinks = document.querySelectorAll(".markdownIt-TOC a");
+
+  // This should probably be throttled.
+  // Especially because it triggers during smooth scrolling.
+  // https://lodash.com/docs/4.17.10#throttle
+  // You could do like...
+  // window.addEventListener("scroll", () => {
+  //    _.throttle(doThatStuff, 100);
+  // });
+  // Only not doing it here to keep this Pen dependency-free.
+
+  window.addEventListener("scroll", event => {
+    let fromTop = window.scrollY;
+
+    mainNavLinks.forEach((link, index) => {
+      let section = document.getElementById(decodeURI(link.hash).substring(1));
+      let nextSection = null
+      if (mainNavLinks[index + 1]) {
+        nextSection = document.getElementById(decodeURI(mainNavLinks[index + 1].hash).substring(1));
+      }
+      if (section.offsetTop <= fromTop) {
+        if (nextSection) {
+          if (nextSection.offsetTop > fromTop) {
+            link.classList.add("current");
+          } else {
+            link.classList.remove("current");    
+          }
+        } else {
+          link.classList.add("current");
+        }
+      } else {
+        link.classList.remove("current");
+      }
+    });
+  });
+
+</script>
+
+      </div>
+    </div>
+  </body>
+</html>

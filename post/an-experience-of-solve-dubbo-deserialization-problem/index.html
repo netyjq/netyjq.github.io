@@ -1,0 +1,279 @@
+<html>
+  <head>
+    <meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>dubbo反序列化引发的性能问题 | yjq.wiki</title>
+<meta name="description" content="it's never too old to learn" />
+<link rel="shortcut icon" href="https://netyjq.github.io/favicon.ico?v=1575944462433">
+<link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.2/css/all.css" integrity="sha384-fnmOCqbTlWIlj8LyTjo7mOUStjsKC4pOpQbqyi7RrhN7udi9RwhKkMHpvLbHG9Sr" crossorigin="anonymous">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.10.0/katex.min.css">
+<link rel="stylesheet" href="https://netyjq.github.io/styles/main.css">
+
+<script src="https://cdn.bootcss.com/highlight.js/9.12.0/highlight.min.js"></script>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Droid+Serif:400,700">
+
+
+
+  </head>
+  <body>
+    <div class="main">
+      <div class="main-content">
+        <div class="site-header">
+  <a href="https://netyjq.github.io">
+  <img class="avatar" src="https://netyjq.github.io/images/avatar.png?v=1575944462433" alt="">
+  </a>
+  <h1 class="site-title">
+    yjq.wiki
+  </h1>
+  <p class="site-description">
+    it's never too old to learn
+  </p>
+  <div class="menu-container">
+    
+      
+        <a href="/" class="menu">
+          首页
+        </a>
+      
+    
+      
+        <a href="/archives" class="menu">
+          归档
+        </a>
+      
+    
+      
+        <a href="/tags" class="menu">
+          标签
+        </a>
+      
+    
+      
+        <a href="/post/about" class="menu">
+          关于
+        </a>
+      
+    
+  </div>
+  <div class="social-container">
+    
+      
+    
+      
+    
+      
+    
+      
+    
+      
+    
+  </div>
+</div>
+
+        <div class="post-detail">
+          <article class="post">
+            <h2 class="post-title">
+              dubbo反序列化引发的性能问题
+            </h2>
+            <div class="post-info">
+              <span>
+                2018-11-17
+              </span>
+              <span>
+                5 min read
+              </span>
+              
+                <a href="https://netyjq.github.io/tag/vAXlVf-YeE" class="post-tag">
+                  # Dubbo
+                </a>
+              
+                <a href="https://netyjq.github.io/tag/B8FOimcq2g" class="post-tag">
+                  # Hessian
+                </a>
+              
+            </div>
+            
+            <div class="post-content-wrapper">
+              <div class="post-content">
+                <p>完整的记录了一次Dubbo反序列化引发的性能问题经历，从问题排查到最终解决，涉及到性能测试，NIO，Dubbo动态调用，Hessian序列化/反序列化，Java反射等问题。</p>
+<!-- more -->
+<h3 id="背景">背景</h3>
+<p>在前置机server集群版本进行性能压测的时候，发现性能较差，并发200的情况下，QPS 只有100上下，并且有一定的错误率（超时）。</p>
+<figure data-type="image" tabindex="1"><img src="http://ww1.sinaimg.cn/large/c9025ee6ly1fxa1626s3zj20wr01zt9v.jpg" alt=""></figure>
+<h3 id="对问题源头进行分析">对问题源头进行分析</h3>
+<p>为确保整个调用链路源头没问题，首先对课程中心RPC接口进行压测，其硬件配置如下 ：</p>
+<pre><code>CPU
+型号名称：Intel(R) Xeon(R) CPU E5-2683 v3 @ 2.00GHz
+CPU(s):                2
+
+内存
+文件系统                 容量  已用  可用 已用% 挂载点
+/dev/mapper/centos-root   34G   24G  9.9G   71% /
+</code></pre>
+<p>压测结果</p>
+<figure data-type="image" tabindex="2"><img src="http://ww1.sinaimg.cn/large/c9025ee6ly1fxa16rsle9j20wn01ujrb.jpg" alt=""></figure>
+<p>CPU 负载情况</p>
+<figure data-type="image" tabindex="3"><img src="http://ww1.sinaimg.cn/large/c9025ee6ly1fxa17cj7aij20k603l0sq.jpg" alt=""></figure>
+<p>通过直接对课程中心的RPC服务接口进行压测，发现服务源头是OK的，TPS 达到508.5，RPC服务提供方CPU基本被榨干，理论上这台机器足够强悍，TPS还可以更高。前置机之前也测试过，netty的性能毋庸置疑，那么只有统一接入最有可能出现问题。</p>
+<h3 id="对应用自身进行分析">对应用自身进行分析</h3>
+<p>初步分析，统一接入有2个地方可能有性能问题，一个是数据库操作（请求流水表字段过长及表数据条数过多引发慢查询，但测试期间测试库已做清理），一个是RPC动态调用上，于是我把核心逻辑抽出来，去除数据库干扰进行性能测试，得到以下结果：</p>
+<figure data-type="image" tabindex="4"><img src="http://ww1.sinaimg.cn/large/c9025ee6ly1fxa1aw3rk6j20wq02l748.jpg" alt=""></figure>
+<figure data-type="image" tabindex="5"><img src="http://ww1.sinaimg.cn/large/c9025ee6ly1fxa1b6oyubj20kf03it8p.jpg" alt=""></figure>
+<p>根据结果可以看到 TPS 只有93，0.0.1%的错误率，看来和数据库并没有多大关系，而且课程中心的RPC服务CPU占用率极低，这进一步让我确认统一接入的问题出在RPC动态调用上。</p>
+<h3 id="找到问题">找到问题</h3>
+<p>在压测过程中发现有一段日志一直打印出来。一开始我以为是统一日志打印出来的，就没太去在意，最后看了源代码后发现这才是真正的问题所在啊！</p>
+<pre><code>[New I/O worker #1] com.alibaba.com.caucho.hessian.io.SerializerFactory.getDeserializer Hessian/Burlap: 'com.bozhong.coursecenter.common.util.ResultMessageBuilder$ResultMessage' is an unknown class in ParallelWebappClassLoader
+  context: ROOT
+  delegate: false
+----------&gt; Parent Classloader:
+java.net.URLClassLoader@3b7541a
+:
+java.lang.ClassNotFoundException: com.bozhong.coursecenter.common.util.ResultMessageBuilder$ResultMessage
+</code></pre>
+<p>顺着提示，找到了 <code>SerializerFactory</code> <code>getDeserializer</code> 这段代码日志打印出来的地方<br>
+<img src="http://ww1.sinaimg.cn/large/c9025ee6ly1fxatswnerbj20vl05r74o.jpg" alt=""></p>
+<p>告警日志打印出来是因为反射时候没有找到类抛出 <code>ClassNotFoundException</code>，因为 <code>Dubbo</code>是使用<code>Hession</code>进行反序列化的，而反序列化的时候会用到反射将二进制流数据转化为<code>Java Object</code>，如果反射成功，<code>Dubbo</code>会缓存在内存里，反之每次调用都会进行反射。</p>
+<figure data-type="image" tabindex="6"><img src="http://ww1.sinaimg.cn/large/c9025ee6ly1fxatthlm30j20o704st8x.jpg" alt=""></figure>
+<h3 id="对问题结论进行验证">对问题结论进行验证</h3>
+<p>至此问题已经排查到了，正是高并发下频繁的调用反射导致了 CPU 占用飙升并且主要耗费时间都花在了反射下。为了验证这个结论，再次进行性能测试并利用JVM性能分析工具对CPU时间片进行采样分析，得到下图结果：</p>
+<figure data-type="image" tabindex="7"><img src="http://ww1.sinaimg.cn/large/c9025ee6ly1fxattrvan7j21fo0l0k54.jpg" alt=""></figure>
+<p>可以看到<code>com.alibaba.com.caucho.hessian.io.SerializerFactory</code>  <code>getDeserializer</code>这个方法执行过程中 <code>Self Time (CPU)</code> 耗时排在第三位。</p>
+<p>接下来把对方提供的RPC服务jar包加入依赖，再次进行性能测试，得到以下结果：</p>
+<figure data-type="image" tabindex="8"><img src="http://ww1.sinaimg.cn/large/c9025ee6ly1fxatu51za1j20wm01xdfr.jpg" alt=""></figure>
+<p>TPS达到了438.6，接近直接调用的 TPS 508</p>
+<h3 id="深入探究问题">深入探究问题</h3>
+<p>问题总算是找到了，那么如何解决？</p>
+<p>回过头来看这个问题，发现业务是可以用的，只是在并发的情况下会出现性能问题，并引发dubbo超时错误，那么dubbo是如何保证可用的呢？</p>
+<p>找到 <code>SerializerFactory</code> <code>getDeserializer</code>  上一层调用的源码  <code>SerializerFactory</code> <code>readObject</code></p>
+<figure data-type="image" tabindex="9"><img src="http://ww1.sinaimg.cn/large/c9025ee6ly1fxatujsc34j20l90d2t9u.jpg" alt=""></figure>
+<p>通过翻阅源码发现，如果反射Java对象出现<code>ClassNotFoundException</code>时，<code>Dubbo</code>最终会反序列化成<code>HashMap</code>。</p>
+<h3 id="解决问题">解决问题</h3>
+<p>由于统一接入这个项目的特殊性，依赖所有客户端的jar包是不可取的，也违背了 “动态调用” 这个设计初衷，那么解决这个问题有2种方式</p>
+<ol>
+<li>业务方返回的数据转化成 <code>String</code>, <code>Integer</code>...等<code>Java</code>基本类型</li>
+<li>处理统一接入<code>Dubbo</code>反序列化方式，全部反序列化成<code>HashMap</code>接收</li>
+</ol>
+<p>以上2点各有利弊，对于第1种方式而言，代价无疑是巨大的，我个人倾向于第2种方式，对他人无侵入，改动工作量最小，效果最佳。</p>
+<p>以下是我的改造方式 通过修改源码，在 <code>SerializerFactory getDeserializer</code>  开头处加入一段判断逻辑</p>
+<figure data-type="image" tabindex="10"><img src="http://ww1.sinaimg.cn/large/c9025ee6ly1fxatv6b3kbj20nh0gmwfg.jpg" alt=""></figure>
+<p>接下来再次进行性能压测，得到如下结果</p>
+<figure data-type="image" tabindex="11"><img src="http://ww1.sinaimg.cn/large/c9025ee6ly1fxatvdt4rij20wi02bt8n.jpg" alt=""></figure>
+<p>TPS 516.5  0错误率。</p>
+<p>以上是统一接出性能问题的发现及解决过程。</p>
+<p>注：以上所有压测条件为本地启动demo程序提供http接口， 并发 200，<code>tomcat</code>使用默认配置 <code>maxThreads</code> 200，<code>accpectCount</code> 100， 本机机器<br>
+为 Win10  intel CORE i5 8G，压测工具为 Apache Jmeter，压测过程中java进程cpu占比15%左右， <code>Dubbo</code>服务提供方性能配置为文章开头已说明。</p>
+
+              </div>
+              <div class="toc-container">
+                <ul class="markdownIt-TOC">
+<li>
+<ul>
+<li>
+<ul>
+<li><a href="#%E8%83%8C%E6%99%AF">背景</a></li>
+<li><a href="#%E5%AF%B9%E9%97%AE%E9%A2%98%E6%BA%90%E5%A4%B4%E8%BF%9B%E8%A1%8C%E5%88%86%E6%9E%90">对问题源头进行分析</a></li>
+<li><a href="#%E5%AF%B9%E5%BA%94%E7%94%A8%E8%87%AA%E8%BA%AB%E8%BF%9B%E8%A1%8C%E5%88%86%E6%9E%90">对应用自身进行分析</a></li>
+<li><a href="#%E6%89%BE%E5%88%B0%E9%97%AE%E9%A2%98">找到问题</a></li>
+<li><a href="#%E5%AF%B9%E9%97%AE%E9%A2%98%E7%BB%93%E8%AE%BA%E8%BF%9B%E8%A1%8C%E9%AA%8C%E8%AF%81">对问题结论进行验证</a></li>
+<li><a href="#%E6%B7%B1%E5%85%A5%E6%8E%A2%E7%A9%B6%E9%97%AE%E9%A2%98">深入探究问题</a></li>
+<li><a href="#%E8%A7%A3%E5%86%B3%E9%97%AE%E9%A2%98">解决问题</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+              </div>
+            </div>
+          </article>
+        </div>
+
+        
+          <div class="next-post">
+            <div class="next">下一篇</div>
+            <a href="https://netyjq.github.io/post/three-ways-avoid-tomcat-deploy-war-started-twice">
+              <h3 class="post-title">
+                Tomcat免路径访问项目启动两次问题
+              </h3>
+            </a>
+          </div>
+        
+
+        
+          
+            <link rel="stylesheet" href="https://unpkg.com/gitalk/dist/gitalk.css">
+<script src="https://unpkg.com/gitalk/dist/gitalk.min.js"></script>
+
+<div id="gitalk-container"></div>
+
+<script>
+
+  var gitalk = new Gitalk({
+    clientID: '5d6b9c9336c7edc32dce',
+    clientSecret: 'db95541cd744854feb3628bf9efea21b5fad428d',
+    repo: 'netyjq.github.io',
+    owner: 'netyjq',
+    admin: ['netyjq'],
+    id: (location.pathname).substring(0, 49),      // Ensure uniqueness and length less than 50
+    distractionFreeMode: false  // Facebook-like distraction free mode
+  })
+
+  gitalk.render('gitalk-container')
+
+</script>
+
+          
+
+          
+        
+
+        <div class="site-footer">
+  Powered by <a href="https://github.com/netyjq/" target="_blank">netyjq</a> | 
+  <a class="rss" href="https://netyjq.github.io/atom.xml" target="_blank">RSS</a>
+</div>
+
+<script>
+  hljs.initHighlightingOnLoad()
+
+  let mainNavLinks = document.querySelectorAll(".markdownIt-TOC a");
+
+  // This should probably be throttled.
+  // Especially because it triggers during smooth scrolling.
+  // https://lodash.com/docs/4.17.10#throttle
+  // You could do like...
+  // window.addEventListener("scroll", () => {
+  //    _.throttle(doThatStuff, 100);
+  // });
+  // Only not doing it here to keep this Pen dependency-free.
+
+  window.addEventListener("scroll", event => {
+    let fromTop = window.scrollY;
+
+    mainNavLinks.forEach((link, index) => {
+      let section = document.getElementById(decodeURI(link.hash).substring(1));
+      let nextSection = null
+      if (mainNavLinks[index + 1]) {
+        nextSection = document.getElementById(decodeURI(mainNavLinks[index + 1].hash).substring(1));
+      }
+      if (section.offsetTop <= fromTop) {
+        if (nextSection) {
+          if (nextSection.offsetTop > fromTop) {
+            link.classList.add("current");
+          } else {
+            link.classList.remove("current");    
+          }
+        } else {
+          link.classList.add("current");
+        }
+      } else {
+        link.classList.remove("current");
+      }
+    });
+  });
+
+</script>
+
+      </div>
+    </div>
+  </body>
+</html>

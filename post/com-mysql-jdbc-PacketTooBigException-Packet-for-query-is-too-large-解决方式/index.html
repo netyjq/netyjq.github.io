@@ -1,0 +1,228 @@
+<html>
+  <head>
+    <meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>com.mysql.jdbc.PacketTooBigException: Packet for query is too large 解决方式 | yjq.wiki</title>
+<meta name="description" content="it's never too old to learn" />
+<link rel="shortcut icon" href="https://netyjq.github.io/favicon.ico?v=1575944462433">
+<link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.2/css/all.css" integrity="sha384-fnmOCqbTlWIlj8LyTjo7mOUStjsKC4pOpQbqyi7RrhN7udi9RwhKkMHpvLbHG9Sr" crossorigin="anonymous">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.10.0/katex.min.css">
+<link rel="stylesheet" href="https://netyjq.github.io/styles/main.css">
+
+<script src="https://cdn.bootcss.com/highlight.js/9.12.0/highlight.min.js"></script>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Droid+Serif:400,700">
+
+
+
+  </head>
+  <body>
+    <div class="main">
+      <div class="main-content">
+        <div class="site-header">
+  <a href="https://netyjq.github.io">
+  <img class="avatar" src="https://netyjq.github.io/images/avatar.png?v=1575944462433" alt="">
+  </a>
+  <h1 class="site-title">
+    yjq.wiki
+  </h1>
+  <p class="site-description">
+    it's never too old to learn
+  </p>
+  <div class="menu-container">
+    
+      
+        <a href="/" class="menu">
+          首页
+        </a>
+      
+    
+      
+        <a href="/archives" class="menu">
+          归档
+        </a>
+      
+    
+      
+        <a href="/tags" class="menu">
+          标签
+        </a>
+      
+    
+      
+        <a href="/post/about" class="menu">
+          关于
+        </a>
+      
+    
+  </div>
+  <div class="social-container">
+    
+      
+    
+      
+    
+      
+    
+      
+    
+      
+    
+  </div>
+</div>
+
+        <div class="post-detail">
+          <article class="post">
+            <h2 class="post-title">
+              com.mysql.jdbc.PacketTooBigException: Packet for query is too large 解决方式
+            </h2>
+            <div class="post-info">
+              <span>
+                2016-11-23
+              </span>
+              <span>
+                2 min read
+              </span>
+              
+                <a href="https://netyjq.github.io/tag/IPlvYCdsIp5" class="post-tag">
+                  # MySQL
+                </a>
+              
+            </div>
+            
+            <div class="post-content-wrapper">
+              <div class="post-content">
+                <p>mysql 异常：</p>
+<pre><code>Cause: com.mysql.jdbc.PacketTooBigException: Packet for query is too large (4616 &gt; 1024). You can change this value on the server by setting the max_allowed_packet' variable.; SQL []; Packet for query is too large (4616 &gt; 1024). You can change this value on the server by setting the max_allowed_packet' variable.; nested exception is com.mysql.jdbc.PacketTooBigException: Packet for query is too large (4616 &gt; 1024). You can change this value on the server by setting the max_allowed_packet' variable.
+</code></pre>
+<p>原因：<br>
+mysql 会根据配置文件会限制server接收的数据包大小，有时候 大的插入和更新会被max_allowed_packet 限制掉，导致插入或者更新失败。</p>
+<p>解决方法：<br>
+登录到服务器mysql，输入命令查看当前配置：</p>
+<pre><code>show VARIABLES like '%max_allowed_packet%';
+Database changed
+mysql&gt; show VARIABLES like '%max_allowed_packet%';
++--------------------------+------------+
+| Variable_name            | Value      |
++--------------------------+------------+
+| max_allowed_packet       | 1024       |
+| slave_max_allowed_packet | 1073741824 |
++--------------------------+------------+
+2 rows in set (0.00 sec)
+</code></pre>
+<p>修改配置</p>
+<p>两种 方式，一种是修改my.cnf 配置文件，一种用mysql 命令中运行。这里说下第二种。</p>
+<p>同样先登录到mysql，输入命令：</p>
+<p>set global max_allowed_packet = 2<em>1024</em>1024*10</p>
+<p>设置成20M，</p>
+<p>然后重启mysql服务，</p>
+<p>登录到mysql，查看当前的配置</p>
+<pre><code>show VARIABLES like '%max_allowed_packet%';
+
+MYSQL&gt; show VARIABLES like '%max_allowed_packet%';
++--------------------------+------------+
+| Variable_name            | Value      |
++--------------------------+------------+
+| max_allowed_packet       | 20971520   |
+| slave_max_allowed_packet | 1073741824 |
++--------------------------+------------+
+2 rows in set (0.00 sec)
+</code></pre>
+<p>再次运行你程序，做数据库操作，发现OK了。</p>
+
+              </div>
+              <div class="toc-container">
+                
+              </div>
+            </div>
+          </article>
+        </div>
+
+        
+          <div class="next-post">
+            <div class="next">下一篇</div>
+            <a href="https://netyjq.github.io/post/use-bean-comparator-to-sort-bean-by-property">
+              <h3 class="post-title">
+                使用BeanComparator对集合按照Bean的属性排序
+              </h3>
+            </a>
+          </div>
+        
+
+        
+          
+            <link rel="stylesheet" href="https://unpkg.com/gitalk/dist/gitalk.css">
+<script src="https://unpkg.com/gitalk/dist/gitalk.min.js"></script>
+
+<div id="gitalk-container"></div>
+
+<script>
+
+  var gitalk = new Gitalk({
+    clientID: '5d6b9c9336c7edc32dce',
+    clientSecret: 'db95541cd744854feb3628bf9efea21b5fad428d',
+    repo: 'netyjq.github.io',
+    owner: 'netyjq',
+    admin: ['netyjq'],
+    id: (location.pathname).substring(0, 49),      // Ensure uniqueness and length less than 50
+    distractionFreeMode: false  // Facebook-like distraction free mode
+  })
+
+  gitalk.render('gitalk-container')
+
+</script>
+
+          
+
+          
+        
+
+        <div class="site-footer">
+  Powered by <a href="https://github.com/netyjq/" target="_blank">netyjq</a> | 
+  <a class="rss" href="https://netyjq.github.io/atom.xml" target="_blank">RSS</a>
+</div>
+
+<script>
+  hljs.initHighlightingOnLoad()
+
+  let mainNavLinks = document.querySelectorAll(".markdownIt-TOC a");
+
+  // This should probably be throttled.
+  // Especially because it triggers during smooth scrolling.
+  // https://lodash.com/docs/4.17.10#throttle
+  // You could do like...
+  // window.addEventListener("scroll", () => {
+  //    _.throttle(doThatStuff, 100);
+  // });
+  // Only not doing it here to keep this Pen dependency-free.
+
+  window.addEventListener("scroll", event => {
+    let fromTop = window.scrollY;
+
+    mainNavLinks.forEach((link, index) => {
+      let section = document.getElementById(decodeURI(link.hash).substring(1));
+      let nextSection = null
+      if (mainNavLinks[index + 1]) {
+        nextSection = document.getElementById(decodeURI(mainNavLinks[index + 1].hash).substring(1));
+      }
+      if (section.offsetTop <= fromTop) {
+        if (nextSection) {
+          if (nextSection.offsetTop > fromTop) {
+            link.classList.add("current");
+          } else {
+            link.classList.remove("current");    
+          }
+        } else {
+          link.classList.add("current");
+        }
+      } else {
+        link.classList.remove("current");
+      }
+    });
+  });
+
+</script>
+
+      </div>
+    </div>
+  </body>
+</html>

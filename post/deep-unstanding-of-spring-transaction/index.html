@@ -1,0 +1,622 @@
+<html>
+  <head>
+    <meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>深入理解Spring事务 | yjq.wiki</title>
+<meta name="description" content="it's never too old to learn" />
+<link rel="shortcut icon" href="https://netyjq.github.io/favicon.ico?v=1575944462433">
+<link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.2/css/all.css" integrity="sha384-fnmOCqbTlWIlj8LyTjo7mOUStjsKC4pOpQbqyi7RrhN7udi9RwhKkMHpvLbHG9Sr" crossorigin="anonymous">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.10.0/katex.min.css">
+<link rel="stylesheet" href="https://netyjq.github.io/styles/main.css">
+
+<script src="https://cdn.bootcss.com/highlight.js/9.12.0/highlight.min.js"></script>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Droid+Serif:400,700">
+
+
+
+  </head>
+  <body>
+    <div class="main">
+      <div class="main-content">
+        <div class="site-header">
+  <a href="https://netyjq.github.io">
+  <img class="avatar" src="https://netyjq.github.io/images/avatar.png?v=1575944462433" alt="">
+  </a>
+  <h1 class="site-title">
+    yjq.wiki
+  </h1>
+  <p class="site-description">
+    it's never too old to learn
+  </p>
+  <div class="menu-container">
+    
+      
+        <a href="/" class="menu">
+          首页
+        </a>
+      
+    
+      
+        <a href="/archives" class="menu">
+          归档
+        </a>
+      
+    
+      
+        <a href="/tags" class="menu">
+          标签
+        </a>
+      
+    
+      
+        <a href="/post/about" class="menu">
+          关于
+        </a>
+      
+    
+  </div>
+  <div class="social-container">
+    
+      
+    
+      
+    
+      
+    
+      
+    
+      
+    
+  </div>
+</div>
+
+        <div class="post-detail">
+          <article class="post">
+            <h2 class="post-title">
+              深入理解Spring事务
+            </h2>
+            <div class="post-info">
+              <span>
+                2019-07-21
+              </span>
+              <span>
+                15 min read
+              </span>
+              
+                <a href="https://netyjq.github.io/tag/EsArW3ASj" class="post-tag">
+                  # Spring
+                </a>
+              
+                <a href="https://netyjq.github.io/tag/Jh9i_XyujM" class="post-tag">
+                  # 事务
+                </a>
+              
+            </div>
+            
+            <div class="post-content-wrapper">
+              <div class="post-content">
+                <p>这是在公司做的一次内部分享，内容包含：Spring事务基本认识，相关特性的探索与代码验证，一些使用上的坑以及如何避免。</p>
+<!--more-->
+<h1 id="深入理解spring事务">深入理解Spring事务</h1>
+<h2 id="定义">定义</h2>
+<p>数据库事务（简称：事务）是数据库管理系统执行过程中的一个逻辑单位，由一个有限的数据库操作序列构成。</p>
+<p>举例：</p>
+<p>某人要在商店使用电子货币购买100元的东西，当中至少包括两个操作：</p>
+<ol>
+<li>该人账户减少100元</li>
+<li>商店账户增加100元</li>
+</ol>
+<p>支持事务的数据库管理系统（transactional DBMS）就是要确保以上两个操作（整个“事务”）都能完成，或一起取消；否则就会出现100元平白消失或出现的情况。</p>
+<h2 id="acid性质">ACID性质</h2>
+<ul>
+<li>原子性（Atomicity）：事务作为一个整体被执行，包含在其中的对数据库的操作要么全部被执行，要么都不执行。</li>
+<li>一致性（Consistency）：事务应确保数据库的状态从一个一致状态转变为另一个一致状态。一致状态的含义是数据库中的数据应满足完整性约束。</li>
+<li>隔离性（Isolation）：多个事务并发执行时，一个事务的执行不应影响其他事务的执行。</li>
+<li>持久性（Durability）：已被提交的事务对数据库的修改应该永久保存在数据库中。</li>
+</ul>
+<h2 id="编程式事务">编程式事务</h2>
+<p>所谓编程式事务指的是通过编码方式实现事务，即类似于JDBC编程实现事务管理。</p>
+<pre><code class="language-java">transaction.begin();
+try {
+    ...
+    transaction.commit();
+} catch(Exception e) {
+    ...
+    transaction.rollback();
+} finally {
+    ...
+}
+</code></pre>
+<h2 id="声明式事务">声明式事务</h2>
+<h3 id="实现原理">实现原理</h3>
+<figure data-type="image" tabindex="1"><img src="https://docs.spring.io/spring/docs/current/spring-framework-reference/images/tx.png" alt="image"></figure>
+<h3 id="通过xml配置">通过xml配置</h3>
+<p>在 xml 配置中的事务配置信息</p>
+<pre><code class="language-xml">&lt;tx:annotation-driven /&gt;
+&lt;bean id=&quot;transactionManager&quot;
+class=&quot;org.springframework.jdbc.datasource.DataSourceTransactionManager&quot;&gt;
+&lt;property name=&quot;dataSource&quot; ref=&quot;dataSource&quot; /&gt;
+&lt;/bean&gt;
+
+&lt;tx:advice id=&quot;bookTxn&quot; transaction-manager=&quot;transactionManager&quot;&gt;
+
+    &lt;tx:attributes&gt; 
+        &lt;tx:method name=&quot;updateStock&quot; isolation=&quot;READ_UNCOMMITTED&quot;/&gt;
+        &lt;tx:method name=&quot;getStock&quot; isolation=&quot;READ_UNCOMMITTED&quot;/&gt;
+    &lt;/tx:attributes&gt;
+
+&lt;/tx:advice&gt;
+</code></pre>
+<h3 id="2-注解">2. 注解</h3>
+<p>将@Transactional 注解添加到合适的方法上，并设置合适的属性信息</p>
+<pre><code class="language-java">
+@Transactional
+public void test() {
+    // ...
+}
+
+</code></pre>
+<h4 id="transactional注解属性信息">@Transactional注解属性信息</h4>
+<ul>
+<li>name: 当在配置文件中有多个 TransactionManager , 可以用该属性指定选择哪个事务管理器。</li>
+<li>propagation: 事务的传播行为，默认值为 REQUIRED。</li>
+<li>isolation: 事务的隔离级别，默认值为 DEFAULT。</li>
+<li>timeout: 事务的超时时间，默认值为-1。如果超过该时间限制但事务还没有完成，则自动回滚事务。</li>
+<li>read-only: 指定事务是否为只读事务，默认值为 false；为了忽略那些不需要事务的方法，比如读取数据，可以设置 read-only 为 true。</li>
+<li>rollback-for: 用于指定能够触发事务回滚的异常类型，如果有多个异常类型需要指定，各类型之间可以通过逗号分隔。</li>
+<li>no-rollback-for: 抛出 no-rollback-for 指定的异常类型，不回滚事务。</li>
+</ul>
+<p>除此以外，@Transactional 注解也可以添加到类级别上。当把@Transactional 注解放在类级别时，表示所有该类的公共方法都配置相同的事务属性信息。</p>
+<p>当类级别配置了@Transactional，方法级别也配置了@Transactional，应用程序会以方法级别的事务属性信息来管理事务，换言之，方法级别的事务属性信息会覆盖类级别的相关配置信息。</p>
+<h3 id="spring事务隔离级别">Spring事务隔离级别</h3>
+<h4 id="脏读">脏读</h4>
+<p>表示一个事务读取到另一个事务修改还没有提交的记录。</p>
+<pre><code>thread 1   thread 2      
+      |         |
+    write(x)    |
+      |         |
+      |        read(x)
+      |         |
+      |         |
+    rollback    |
+      v         v 
+           value (x) is now dirty (incorrect)
+</code></pre>
+<h4 id="不可重复读">不可重复读</h4>
+<p>不可重复读取是指事务在两次条件相同的读取中，获取到不同的结果。</p>
+<h4 id="幻读">幻读</h4>
+<p>幻读是指当事务不是独立执行时发生的一种现象。<br>
+事务A读取与搜索条件相匹配的若干行。事务B以插入或删除行等方式来修改事务A的结果集，然后再提交。</p>
+<p>最高隔离级别SERIALIZABLE_READ可以保证不出现幻读的问题。</p>
+<h4 id="数据库的四种隔离级别">数据库的四种隔离级别</h4>
+<p>隔离级别是指若干个并发的事务之间的隔离程度，与我们开发时候主要相关的场景包括：脏读取、重复读、幻读。我们可以看<code>org.springframework.transaction.annotation.Isolation</code>枚举类中定义了五个表示隔离级别的值：</p>
+<pre><code class="language-java">public enum Isolation {
+    DEFAULT(-1),
+    READ_UNCOMMITTED(1),
+    READ_COMMITTED(2),
+    REPEATABLE_READ(4),
+    SERIALIZABLE(8);
+}
+</code></pre>
+<ul>
+<li>DEFAULT: 这是默认值，表示使用底层数据库的默认隔离级别。对大部分数据库而言，通常这值就是<code>READ_COMMITTED</code></li>
+<li>READ_UNCOMMITTED: 该隔离级别表示一个事务可以读取另一个事务修改但还没有提交的数据。该级别不能防止脏读和不可重复读，因此很少使用该隔离级别。</li>
+<li>READ_COMMITTED: 该隔离级别表示一个事务只能读取另一个事务已经提交的数据。该级别可以防止脏读，这也是大多数情况下的推荐值。</li>
+<li>REPEATABLE_READ: 该隔离级别表示一个事务在整个过程中可以多次重复执行某个查询，并且每次返回的记录都相同。即使在多次查询之间有新增的数据满足该查询，这些新增的记录也会被忽略。该级别可以防止脏读和不可重复读。</li>
+<li>SERIALIZABLE: 所有的事务依次逐个执行，这样事务之间就完全不可能产生干扰，也就是说，该级别可以防止脏读、不可重复读以及幻读。但是这将严重影响程序的性能。通常情况下也不会用到该级别。</li>
+</ul>
+<p>使用方法：</p>
+<pre><code class="language-java">@Transactional(isolation = Isolation.DEFAULT)
+</code></pre>
+<h3 id="spring事务传播行为">Spring事务传播行为</h3>
+<p>事务的传播行为是指，如果在开始当前事务之前，一个事务上下文已经存在，此时有若干选项可以指定一个事务性方法的执行行为。<br>
+我们可以看<code>org.springframework.transaction.annotation.Propagation</code>枚举类中定义了6个表示传播行为的枚举值：</p>
+<pre><code class="language-java">public enum Propagation {
+    REQUIRED(0),
+    SUPPORTS(1),
+    MANDATORY(2),
+    REQUIRES_NEW(3),
+    NOT_SUPPORTED(4),
+    NEVER(5),
+    NESTED(6);
+}
+</code></pre>
+<ul>
+<li>REQUIRED：如果当前存在事务，则加入该事务；如果当前没有事务，则创建一个新的事务。</li>
+</ul>
+<figure data-type="image" tabindex="2"><img src="https://docs.spring.io/spring/docs/current/spring-framework-reference/images/tx_prop_required.png" alt="image"></figure>
+<ul>
+<li>SUPPORTS：如果当前存在事务，则加入该事务；如果当前没有事务，则以非事务的方式继续运行。</li>
+<li>MANDATORY：如果当前存在事务，则加入该事务；如果当前没有事务，则抛出异常。</li>
+<li>REQUIRES_NEW：创建一个新的事务，如果当前存在事务，则把当前事务挂起。</li>
+<li>NOT_SUPPORTED：以非事务方式运行，如果当前存在事务，则把当前事务挂起。</li>
+<li>NEVER：以非事务方式运行，如果当前存在事务，则抛出异常。</li>
+<li>NESTED：如果当前存在事务，则创建一个事务作为当前事务的嵌套事务来运行；如果当前没有事务，则该取值等价于REQUIRED。</li>
+</ul>
+<h2 id="延伸">延伸</h2>
+<h3 id="spring事务失效的几种情况">Spring事务失效的几种情况</h3>
+<h4 id="1-自调用">1. 自调用</h4>
+<p>原因：</p>
+<pre><code class="language-java">
+@Service
+class A {
+    @Transactinal
+    method b(){...}
+    
+    method a(){    //标记1
+        b();
+    }
+}
+</code></pre>
+<pre><code class="language-java">// Spring扫描注解后，创建了另外一个代理类，并为有注解的方法插入一个startTransaction()方法：
+class proxy$A {
+    A objectA = new A();
+    method b(){    //标记2
+        startTransaction();
+        objectA.b();
+    }
+ 
+    method a(){    //标记3
+        objectA.a();    //由于a()没有注解，所以不会启动transaction，而是直接调用A的实例的a()方法
+    }
+}
+</code></pre>
+<p>解决方法：</p>
+<ul>
+<li>把这两个方法分开到不同的类中；</li>
+<li>把注解加到类名上面；</li>
+</ul>
+<h4 id="2-目标方法非public">2. 目标方法非public</h4>
+<h4 id="3-事务方法之间的互相调用不会开启新的事务">3. 事务方法之间的互相调用不会开启新的事务</h4>
+<p>Spring采用动态代理机制来实现事务控制，而动态代理最终都是要调用原始对象的，而原始对象在去调用方法时，是不会再触发代理了。</p>
+<h3 id="事务超时时间为何不生效">事务超时时间为何不生效？</h3>
+<p>下面代码是不生效的</p>
+<pre><code class="language-java">public void testTimeout() throws InterruptedException {  
+    System.out.println(System.currentTimeMillis());  
+    JdbcTemplate jdbcTemplate = new JdbcTemplate(ds);  
+    jdbcTemplate.execute(&quot; update test set hobby = hobby || '1'&quot;);  
+    System.out.println(System.currentTimeMillis());  
+    Thread.sleep(3000L);  
+}  
+</code></pre>
+<p>下面代码是生效的</p>
+<pre><code class="language-java">public void testTimeout() throws InterruptedException {  
+    Thread.sleep(3000L);  
+    System.out.println(System.currentTimeMillis());  
+    JdbcTemplate jdbcTemplate = new JdbcTemplate(ds);  
+    jdbcTemplate.execute(&quot; update test set hobby = hobby || '1'&quot;);  
+    System.out.println(System.currentTimeMillis());  
+}  
+</code></pre>
+<p>读者可以参考 https://jinnianshilongnian.iteye.com/blog/1986023</p>
+<h3 id="如何验证传播行为与隔离级别">如何验证传播行为与隔离级别？</h3>
+<p>下面通过一段转账示例代码来验证Spring传播行为与隔离级别</p>
+<ol>
+<li>DAO层</li>
+</ol>
+<p>dao层使用jdbc的方式实现2个操作，转账（更新余额）和账号查询。</p>
+<pre><code class="language-java">@Repository
+public class AccountDao extends JdbcDaoSupport {
+
+    @Autowired
+    public void setDs(DataSource dataSource) {
+        setDataSource(dataSource);
+    }
+
+    public void transfer(int fromAccountId, int toAccountId, int amount) throws Exception {
+        Account fromAccount = getAccount(fromAccountId);
+        Account toAccount = getAccount(toAccountId);
+
+        System.out.println(String.format(&quot;%s 账户余额: %s&quot;, fromAccount.getName(), fromAccount.getBalance()));
+        System.out.println(String.format(&quot;%s 账户余额: %s&quot;, toAccount.getName(), toAccount.getBalance()));
+
+        if (fromAccount.getBalance() &lt; amount) {
+            throw new RuntimeException(&quot;Cannot transfer, account doesn't have enough money!&quot;);
+        }
+
+        int fromAccountBalance = fromAccount.getBalance() - amount;
+        int toAccountBalance = toAccount.getBalance() + amount;
+
+        getJdbcTemplate().update(&quot;UPDATE ACCOUNT SET BALANCE = ? WHERE ID = ?&quot;, fromAccountBalance, fromAccountId);
+        System.out.println(String.format(&quot;%s 转账: %s, 余额: %s&quot;, fromAccount.getName(), amount, fromAccountBalance));
+
+        getJdbcTemplate().update(&quot;UPDATE ACCOUNT SET BALANCE = ? WHERE ID = ?&quot;, toAccountBalance, toAccountId);
+        System.out.println(String.format(&quot;%s 入账: %s, 余额: %s&quot;, toAccount.getName(), amount, toAccountBalance));
+    }
+
+    public Account getAccount(int accountId) {
+        Account account =  getJdbcTemplate().queryForObject(&quot;select * from account where id = ?&quot;, new Object[]{accountId}, new RowMapper&lt;Account&gt;(){
+            @Override
+            public Account mapRow(ResultSet rs, int rowNum) throws SQLException {
+                Account account = new Account();
+                account.setBalance(rs.getInt(&quot;balance&quot;));
+                account.setName(rs.getString(&quot;name&quot;));
+                account.setId(rs.getInt(&quot;id&quot;));
+                return account;
+            }
+        });
+        if (null == account) {
+            throw new RuntimeException(&quot;Account &quot; + accountId + &quot; doesn't exists&quot;);
+        }
+        return account;
+    }
+
+    public void print(int fromAccountId, int toAccountId) {
+        Account fromAccount = getAccount(fromAccountId);
+        Account toAccount = getAccount(toAccountId);
+        System.out.println(String.format(&quot;%s 账户余额: %s&quot;, fromAccount.getName(), fromAccount.getBalance()));
+        System.out.println(String.format(&quot;%s 账户余额: %s&quot;, toAccount.getName(), toAccount.getBalance()));
+    }
+}
+</code></pre>
+<ol start="2">
+<li>Service层</li>
+</ol>
+<p>service层有2个方法加入了<code>@Transactional</code>注解，分别是转账和余额查询操作。这里实现的逻辑是。在转账事务完成但还没有提交之前，另一个事务读取账号信息打印余额，通过修改<code>@Transactional</code>属性进行对应测试。</p>
+<pre><code class="language-java">@Service
+public class AccountServiceImpl implements IAccountService {
+
+    @Autowired
+    private AccountDao accountDao;
+    
+    @Override
+    @Transactional(rollbackFor = Exception.class, timeout = 1, isolation = Isolation.READ_UNCOMMITTED, propagation = Propagation.REQUIRED)
+    public void doTransfer(int fromAccountId, int toAccountId, int amount) throws Exception {
+        try {
+            synchronized (LockUtil.lock) {
+                accountDao.transfer(fromAccountId, toAccountId, amount);
+                System.out.println(&quot;转账线程开始等待&quot;);
+                LockUtil.lock.wait();
+                System.out.println(&quot;转账线程被唤醒了&quot;);
+                Integer.valueOf(&quot;&quot;);
+            }
+        } catch (Exception e) {
+            System.out.println(&quot;发生异常. 事务开始回滚&quot;);
+            throw e;
+        }
+    }
+
+    @Transactional(isolation = Isolation.READ_UNCOMMITTED, propagation = Propagation.REQUIRED)
+    public void methodB(int fromAccountId, int toAccountId) {
+        synchronized (LockUtil.lock) {
+            System.out.println(&quot;--------------------&quot;);
+            System.out.println(String.format(&quot;%s: 事务未提交前读取账户数据&quot;, Thread.currentThread().getName()));
+            print(fromAccountId, toAccountId);
+            LockUtil.lock.notify();
+            System.out.println(&quot;发出唤醒通知&quot;);
+            System.out.println(&quot;--------------------&quot;);
+        }
+    }
+    
+    public void print(int fromAccountId, int toAccountId) {
+        accountDao.print(fromAccountId, toAccountId);
+    }
+
+
+}
+
+</code></pre>
+<ol start="3">
+<li>test</li>
+</ol>
+<p>分别启动2个线程，转账线程先启动，然后再启动读取线程。</p>
+<pre><code class="language-java">@Test
+public void test() throws InterruptedException {
+    new Thread(new Runnable() {
+        @Override
+        public void run() {
+            try {
+                accountService.doTransfer(1,2,100);
+            } catch (Exception e) {
+                e.printStackTrace();
+                accountService.print(1,2);
+            }
+        }
+    }).start();
+    Thread.sleep(1000);
+    new Thread(new Runnable() {
+        @Override
+        public void run() {
+            accountService.methodB(1,2);
+        }
+    }).start();
+}
+</code></pre>
+<p>运行结果如下：</p>
+<pre><code>18:58:48.484 logback [Thread-4] DEBUG o.s.j.d.DataSourceTransactionManager - Creating new transaction with name [com.yjq.service.impl.AccountServiceImpl.doTransfer]: PROPAGATION_REQUIRED,ISOLATION_READ_UNCOMMITTED,timeout_1; '',-java.lang.Exception
+18:58:48.993 logback [Thread-4] DEBUG o.s.j.d.DataSourceTransactionManager - Acquired Connection [com.mysql.jdbc.JDBC4Connection@6163d8eb] for JDBC transaction
+18:58:48.997 logback [Thread-4] DEBUG o.s.j.d.DataSourceTransactionManager - Switching JDBC Connection [com.mysql.jdbc.JDBC4Connection@6163d8eb] to manual commit
+Tom 账户余额: 3000
+Bob 账户余额: 3000
+Tom 转账: 100, 余额: 2900
+Bob 入账: 100, 余额: 3100
+转账线程开始等待
+18:58:49.470 logback [Thread-6] DEBUG o.s.j.d.DataSourceTransactionManager - Creating new transaction with name [com.yjq.service.impl.AccountServiceImpl.methodB]: PROPAGATION_REQUIRED,ISOLATION_READ_UNCOMMITTED; ''
+18:58:49.474 logback [Thread-6] DEBUG o.s.j.d.DataSourceTransactionManager - Acquired Connection [com.mysql.jdbc.JDBC4Connection@67728b47] for JDBC transaction
+18:58:49.475 logback [Thread-6] DEBUG o.s.j.d.DataSourceTransactionManager - Switching JDBC Connection [com.mysql.jdbc.JDBC4Connection@67728b47] to manual commit
+--------------------
+Thread-6: 事务未提交前读取账户数据
+Tom 账户余额: 2900
+Bob 账户余额: 3100
+发出唤醒通知
+--------------------
+转账线程被唤醒了
+发生异常. 事务开始回滚
+18:58:49.479 logback [Thread-6] DEBUG o.s.j.d.DataSourceTransactionManager - Initiating transaction commit
+18:58:49.479 logback [Thread-6] DEBUG o.s.j.d.DataSourceTransactionManager - Committing JDBC transaction on Connection [com.mysql.jdbc.JDBC4Connection@67728b47]
+18:58:49.479 logback [Thread-4] DEBUG o.s.j.d.DataSourceTransactionManager - Initiating transaction rollback
+18:58:49.479 logback [Thread-4] DEBUG o.s.j.d.DataSourceTransactionManager - Rolling back JDBC transaction on Connection [com.mysql.jdbc.JDBC4Connection@6163d8eb]
+18:58:49.480 logback [Thread-6] DEBUG o.s.j.d.DataSourceTransactionManager - Releasing JDBC Connection [com.mysql.jdbc.JDBC4Connection@67728b47] after transaction
+18:58:49.481 logback [Thread-4] DEBUG o.s.j.d.DataSourceTransactionManager - Releasing JDBC Connection [com.mysql.jdbc.JDBC4Connection@6163d8eb] after transaction
+java.lang.NumberFormatException: For input string: &quot;&quot;
+	at java.lang.NumberFormatException.forInputString(NumberFormatException.java:65)
+	at java.lang.Integer.parseInt(Integer.java:592)
+	at java.lang.Integer.valueOf(Integer.java:766)
+	at com.yjq.service.impl.AccountServiceImpl.doTransfer(AccountServiceImpl.java:40)
+	at com.yjq.service.impl.AccountServiceImpl$$FastClassBySpringCGLIB$$2cbd8822.invoke(&lt;generated&gt;)
+	at org.springframework.cglib.proxy.MethodProxy.invoke(MethodProxy.java:204)
+	at org.springframework.aop.framework.CglibAopProxy$CglibMethodInvocation.invokeJoinpoint(CglibAopProxy.java:738)
+	at org.springframework.aop.framework.ReflectiveMethodInvocation.proceed(ReflectiveMethodInvocation.java:157)
+	at org.springframework.transaction.interceptor.TransactionInterceptor$1.proceedWithInvocation(TransactionInterceptor.java:99)
+	at org.springframework.transaction.interceptor.TransactionAspectSupport.invokeWithinTransaction(TransactionAspectSupport.java:282)
+	at org.springframework.transaction.interceptor.TransactionInterceptor.invoke(TransactionInterceptor.java:96)
+	at org.springframework.aop.framework.ReflectiveMethodInvocation.proceed(ReflectiveMethodInvocation.java:179)
+	at org.springframework.aop.framework.CglibAopProxy$DynamicAdvisedInterceptor.intercept(CglibAopProxy.java:673)
+	at com.yjq.service.impl.AccountServiceImpl$$EnhancerBySpringCGLIB$$1380cbfd.doTransfer(&lt;generated&gt;)
+	at com.yjq.test.TransactionTest$1.run(TransactionTest.java:40)
+	at java.lang.Thread.run(Thread.java:748)
+Tom 账户余额: 3000
+Bob 账户余额: 3000
+
+</code></pre>
+<p>这里通过日志可以很清楚的了解到事务执行过程，读者可以修改注解其它配置，本文暂不赘述。</p>
+<h2 id="参考资料">参考资料</h2>
+<ol>
+<li>
+<p><a href="https://docs.spring.io/spring/docs/current/spring-framework-reference/data-access.html#transaction">Spring Doc About Transaction Management</a></p>
+</li>
+<li>
+<p><a href="https://jinnianshilongnian.iteye.com/blog/1986023">Spring事务超时时间可能存在的错误认识</a></p>
+</li>
+</ol>
+
+              </div>
+              <div class="toc-container">
+                <ul class="markdownIt-TOC">
+<li><a href="#%E6%B7%B1%E5%85%A5%E7%90%86%E8%A7%A3spring%E4%BA%8B%E5%8A%A1">深入理解Spring事务</a>
+<ul>
+<li><a href="#%E5%AE%9A%E4%B9%89">定义</a></li>
+<li><a href="#acid%E6%80%A7%E8%B4%A8">ACID性质</a></li>
+<li><a href="#%E7%BC%96%E7%A8%8B%E5%BC%8F%E4%BA%8B%E5%8A%A1">编程式事务</a></li>
+<li><a href="#%E5%A3%B0%E6%98%8E%E5%BC%8F%E4%BA%8B%E5%8A%A1">声明式事务</a>
+<ul>
+<li><a href="#%E5%AE%9E%E7%8E%B0%E5%8E%9F%E7%90%86">实现原理</a></li>
+<li><a href="#%E9%80%9A%E8%BF%87xml%E9%85%8D%E7%BD%AE">通过xml配置</a></li>
+<li><a href="#2-%E6%B3%A8%E8%A7%A3">2. 注解</a>
+<ul>
+<li><a href="#transactional%E6%B3%A8%E8%A7%A3%E5%B1%9E%E6%80%A7%E4%BF%A1%E6%81%AF">@Transactional注解属性信息</a></li>
+</ul>
+</li>
+<li><a href="#spring%E4%BA%8B%E5%8A%A1%E9%9A%94%E7%A6%BB%E7%BA%A7%E5%88%AB">Spring事务隔离级别</a>
+<ul>
+<li><a href="#%E8%84%8F%E8%AF%BB">脏读</a></li>
+<li><a href="#%E4%B8%8D%E5%8F%AF%E9%87%8D%E5%A4%8D%E8%AF%BB">不可重复读</a></li>
+<li><a href="#%E5%B9%BB%E8%AF%BB">幻读</a></li>
+<li><a href="#%E6%95%B0%E6%8D%AE%E5%BA%93%E7%9A%84%E5%9B%9B%E7%A7%8D%E9%9A%94%E7%A6%BB%E7%BA%A7%E5%88%AB">数据库的四种隔离级别</a></li>
+</ul>
+</li>
+<li><a href="#spring%E4%BA%8B%E5%8A%A1%E4%BC%A0%E6%92%AD%E8%A1%8C%E4%B8%BA">Spring事务传播行为</a></li>
+</ul>
+</li>
+<li><a href="#%E5%BB%B6%E4%BC%B8">延伸</a>
+<ul>
+<li><a href="#spring%E4%BA%8B%E5%8A%A1%E5%A4%B1%E6%95%88%E7%9A%84%E5%87%A0%E7%A7%8D%E6%83%85%E5%86%B5">Spring事务失效的几种情况</a>
+<ul>
+<li><a href="#1-%E8%87%AA%E8%B0%83%E7%94%A8">1. 自调用</a></li>
+<li><a href="#2-%E7%9B%AE%E6%A0%87%E6%96%B9%E6%B3%95%E9%9D%9Epublic">2. 目标方法非public</a></li>
+<li><a href="#3-%E4%BA%8B%E5%8A%A1%E6%96%B9%E6%B3%95%E4%B9%8B%E9%97%B4%E7%9A%84%E4%BA%92%E7%9B%B8%E8%B0%83%E7%94%A8%E4%B8%8D%E4%BC%9A%E5%BC%80%E5%90%AF%E6%96%B0%E7%9A%84%E4%BA%8B%E5%8A%A1">3. 事务方法之间的互相调用不会开启新的事务</a></li>
+</ul>
+</li>
+<li><a href="#%E4%BA%8B%E5%8A%A1%E8%B6%85%E6%97%B6%E6%97%B6%E9%97%B4%E4%B8%BA%E4%BD%95%E4%B8%8D%E7%94%9F%E6%95%88">事务超时时间为何不生效？</a></li>
+<li><a href="#%E5%A6%82%E4%BD%95%E9%AA%8C%E8%AF%81%E4%BC%A0%E6%92%AD%E8%A1%8C%E4%B8%BA%E4%B8%8E%E9%9A%94%E7%A6%BB%E7%BA%A7%E5%88%AB">如何验证传播行为与隔离级别？</a></li>
+</ul>
+</li>
+<li><a href="#%E5%8F%82%E8%80%83%E8%B5%84%E6%96%99">参考资料</a></li>
+</ul>
+</li>
+</ul>
+
+              </div>
+            </div>
+          </article>
+        </div>
+
+        
+          <div class="next-post">
+            <div class="next">下一篇</div>
+            <a href="https://netyjq.github.io/post/sql-query-data-center">
+              <h3 class="post-title">
+                开源项目——数据中心平台
+              </h3>
+            </a>
+          </div>
+        
+
+        
+          
+            <link rel="stylesheet" href="https://unpkg.com/gitalk/dist/gitalk.css">
+<script src="https://unpkg.com/gitalk/dist/gitalk.min.js"></script>
+
+<div id="gitalk-container"></div>
+
+<script>
+
+  var gitalk = new Gitalk({
+    clientID: '5d6b9c9336c7edc32dce',
+    clientSecret: 'db95541cd744854feb3628bf9efea21b5fad428d',
+    repo: 'netyjq.github.io',
+    owner: 'netyjq',
+    admin: ['netyjq'],
+    id: (location.pathname).substring(0, 49),      // Ensure uniqueness and length less than 50
+    distractionFreeMode: false  // Facebook-like distraction free mode
+  })
+
+  gitalk.render('gitalk-container')
+
+</script>
+
+          
+
+          
+        
+
+        <div class="site-footer">
+  Powered by <a href="https://github.com/netyjq/" target="_blank">netyjq</a> | 
+  <a class="rss" href="https://netyjq.github.io/atom.xml" target="_blank">RSS</a>
+</div>
+
+<script>
+  hljs.initHighlightingOnLoad()
+
+  let mainNavLinks = document.querySelectorAll(".markdownIt-TOC a");
+
+  // This should probably be throttled.
+  // Especially because it triggers during smooth scrolling.
+  // https://lodash.com/docs/4.17.10#throttle
+  // You could do like...
+  // window.addEventListener("scroll", () => {
+  //    _.throttle(doThatStuff, 100);
+  // });
+  // Only not doing it here to keep this Pen dependency-free.
+
+  window.addEventListener("scroll", event => {
+    let fromTop = window.scrollY;
+
+    mainNavLinks.forEach((link, index) => {
+      let section = document.getElementById(decodeURI(link.hash).substring(1));
+      let nextSection = null
+      if (mainNavLinks[index + 1]) {
+        nextSection = document.getElementById(decodeURI(mainNavLinks[index + 1].hash).substring(1));
+      }
+      if (section.offsetTop <= fromTop) {
+        if (nextSection) {
+          if (nextSection.offsetTop > fromTop) {
+            link.classList.add("current");
+          } else {
+            link.classList.remove("current");    
+          }
+        } else {
+          link.classList.add("current");
+        }
+      } else {
+        link.classList.remove("current");
+      }
+    });
+  });
+
+</script>
+
+      </div>
+    </div>
+  </body>
+</html>

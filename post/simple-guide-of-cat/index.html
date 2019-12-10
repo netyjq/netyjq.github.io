@@ -1,0 +1,417 @@
+<html>
+  <head>
+    <meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>大众点评CAT研究 | yjq.wiki</title>
+<meta name="description" content="it's never too old to learn" />
+<link rel="shortcut icon" href="https://netyjq.github.io/favicon.ico?v=1575944462433">
+<link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.2/css/all.css" integrity="sha384-fnmOCqbTlWIlj8LyTjo7mOUStjsKC4pOpQbqyi7RrhN7udi9RwhKkMHpvLbHG9Sr" crossorigin="anonymous">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.10.0/katex.min.css">
+<link rel="stylesheet" href="https://netyjq.github.io/styles/main.css">
+
+<script src="https://cdn.bootcss.com/highlight.js/9.12.0/highlight.min.js"></script>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Droid+Serif:400,700">
+
+
+
+  </head>
+  <body>
+    <div class="main">
+      <div class="main-content">
+        <div class="site-header">
+  <a href="https://netyjq.github.io">
+  <img class="avatar" src="https://netyjq.github.io/images/avatar.png?v=1575944462433" alt="">
+  </a>
+  <h1 class="site-title">
+    yjq.wiki
+  </h1>
+  <p class="site-description">
+    it's never too old to learn
+  </p>
+  <div class="menu-container">
+    
+      
+        <a href="/" class="menu">
+          首页
+        </a>
+      
+    
+      
+        <a href="/archives" class="menu">
+          归档
+        </a>
+      
+    
+      
+        <a href="/tags" class="menu">
+          标签
+        </a>
+      
+    
+      
+        <a href="/post/about" class="menu">
+          关于
+        </a>
+      
+    
+  </div>
+  <div class="social-container">
+    
+      
+    
+      
+    
+      
+    
+      
+    
+      
+    
+  </div>
+</div>
+
+        <div class="post-detail">
+          <article class="post">
+            <h2 class="post-title">
+              大众点评CAT研究
+            </h2>
+            <div class="post-info">
+              <span>
+                2018-04-18
+              </span>
+              <span>
+                8 min read
+              </span>
+              
+                <a href="https://netyjq.github.io/tag/AE5Z8s1ZoE" class="post-tag">
+                  # CAT
+                </a>
+              
+                <a href="https://netyjq.github.io/tag/kZbSrAPPmUO" class="post-tag">
+                  # 监控
+                </a>
+              
+            </div>
+            
+            <div class="post-content-wrapper">
+              <div class="post-content">
+                <p>CAT(Central Application Tracking)是基于Java开发的实时应用监控平台，为大众点评网提供了全面的监控服务和决策支持。<br>
+CAT作为大众点评网基础监控组件，它已经在中间件框架（MVC框架，RPC框架，数据库框架，缓存框架等）中得到广泛应用，为点评各业务线提供系统的性能指标、健康状况、基础告警等。</p>
+<!--more -->
+<h3 id="cat-是什么">CAT 是什么？</h3>
+<p>CAT(Central Application Tracking)是基于Java开发的实时应用监控平台，为大众点评网提供了全面的监控服务和决策支持。<br>
+CAT作为大众点评网基础监控组件，它已经在中间件框架（MVC框架，RPC框架，数据库框架，缓存框架等）中得到广泛应用，为点评各业务线提供系统的性能指标、健康状况、基础告警等。</p>
+<h3 id="简单运用">简单运用</h3>
+<h4 id="运行环境">运行环境</h4>
+<ul>
+<li>Maven 3 （必须）</li>
+<li>Mysql（必须）</li>
+<li>JDK6 或 JDK7 不支持JDK8 （必须）</li>
+<li>Tomact</li>
+</ul>
+<h4 id="下载编译">下载编译</h4>
+<pre><code class="language-html">git clone https://github.com/dianping/cat.git
+
+....
+
+mvn clean install -DskipTests
+</code></pre>
+<h4 id="cat服务端运行部署">CAT服务端运行部署</h4>
+<p>CAT 的配置文件需要放在容器运行环境的根目录下的 <code>data/appdatas/cat</code>下，比如 tomcat 运行在 <code>C:\dev\apache-tomcat-8.5.30</code> 那么配置文件就需要放在 <code>C:\appdatas\cat</code> 下， 确保CAT对该目录有读写权限。</p>
+<p>在部署 <code>cat-home</code> 之前需要配置 <code>client.xml</code>，<code>server.xml</code>, <code>datasource.xml</code> 3个文件，文件存放在项目中的 <code>scripts</code> 目录中。</p>
+<p>具体的文档请参考官网，下面给一份示例</p>
+<p><strong>client.xml</strong></p>
+<pre><code class="language-xml">&lt;?xml version=&quot;1.0&quot; encoding=&quot;utf-8&quot;?&gt;
+
+&lt;config mode=&quot;client&quot; xmlns:xsi=&quot;http://www.w3.org/2001/XMLSchema&quot; xsi:noNamespaceSchemaLocation=&quot;config.xsd&quot;&gt;
+	&lt;servers&gt;
+		&lt;!-- Local mode for development --&gt;
+		&lt;server ip=&quot;172.16.120.31&quot; port=&quot;2280&quot; http-port=&quot;8080&quot; /&gt;
+
+	&lt;/servers&gt;
+&lt;/config&gt;
+</code></pre>
+<p><strong>server.xml</strong></p>
+<pre><code class="language-xml">&lt;?xml version=&quot;1.0&quot; encoding=&quot;utf-8&quot;?&gt;
+&lt;config local-mode=&quot;false&quot; hdfs-machine=&quot;false&quot; job-machine=&quot;true&quot; alert-machine=&quot;true&quot;&gt;
+	&lt;storage  local-base-dir=&quot;/data/appdatas/cat/bucket/&quot; max-hdfs-storage-time=&quot;15&quot; local-report-storage-time=&quot;7&quot; local-logivew-storage-time=&quot;7&quot;&gt;&lt;/storage&gt;
+
+	&lt;console default-domain=&quot;Cat&quot; show-cat-domain=&quot;true&quot;&gt;
+		&lt;remote-servers&gt;172.16.120.31:8080&lt;/remote-servers&gt;
+	&lt;/console&gt;
+
+&lt;/config&gt;
+</code></pre>
+<p><strong>datasource.xml</strong></p>
+<pre><code class="language-xml">&lt;?xml version=&quot;1.0&quot; encoding=&quot;utf-8&quot;?&gt;
+
+&lt;data-sources&gt;
+	&lt;data-source id=&quot;cat&quot;&gt;
+		&lt;maximum-pool-size&gt;3&lt;/maximum-pool-size&gt;
+		&lt;connection-timeout&gt;1s&lt;/connection-timeout&gt;
+		&lt;idle-timeout&gt;10m&lt;/idle-timeout&gt;
+		&lt;statement-cache-size&gt;1000&lt;/statement-cache-size&gt;
+		&lt;properties&gt;
+			&lt;driver&gt;com.mysql.jdbc.Driver&lt;/driver&gt;
+			&lt;url&gt;&lt;![CDATA[jdbc:mysql://172.16.150.110:3306/cat]]&gt;&lt;/url&gt;
+			&lt;user&gt;root&lt;/user&gt;
+			&lt;password&gt;123456&lt;/password&gt;
+			&lt;connectionProperties&gt;&lt;![CDATA[useUnicode=true&amp;autoReconnect=true]]&gt;&lt;/connectionProperties&gt;
+		&lt;/properties&gt;
+	&lt;/data-source&gt;
+	&lt;data-source id=&quot;app&quot;&gt;
+		&lt;maximum-pool-size&gt;3&lt;/maximum-pool-size&gt;
+		&lt;connection-timeout&gt;1s&lt;/connection-timeout&gt;
+		&lt;idle-timeout&gt;10m&lt;/idle-timeout&gt;
+		&lt;statement-cache-size&gt;1000&lt;/statement-cache-size&gt;
+		&lt;properties&gt;
+			&lt;driver&gt;com.mysql.jdbc.Driver&lt;/driver&gt;
+			&lt;url&gt;&lt;![CDATA[jdbc:mysql://172.16.150.110:3306/cat]]&gt;&lt;/url&gt;
+			&lt;user&gt;root&lt;/user&gt;
+			&lt;password&gt;123456&lt;/password&gt;
+			&lt;connectionProperties&gt;&lt;![CDATA[useUnicode=true&amp;autoReconnect=true]]&gt;&lt;/connectionProperties&gt;
+		&lt;/properties&gt;
+	&lt;/data-source&gt;
+&lt;/data-sources&gt;
+</code></pre>
+<p>以上完成后可以打开 ip:port/cat/r/ 查看效果。</p>
+<h4 id="cat客户端部署">CAT客户端部署</h4>
+<ol>
+<li>
+<p>pom加入 <code>cat-client.jar</code> 依赖</p>
+</li>
+<li>
+<p>配置client.xml</p>
+<p>CAT客户端同样需要配置容器运行根目录下的 <code>data/appdatas/cat</code>的读写权限。</p>
+</li>
+</ol>
+<pre><code class="language-xml">&lt;?xml version=&quot;1.0&quot; encoding=&quot;utf-8&quot;?&gt;
+
+&lt;config mode=&quot;client&quot;&gt;
+	&lt;servers&gt;
+		&lt;server ip=&quot;172.16.120.31&quot; port=&quot;2280&quot; http-port=&quot;8080&quot; /&gt;
+	&lt;/servers&gt;
+&lt;/config&gt;
+</code></pre>
+<ol start="3">
+<li>
+<p>配置 app.properties</p>
+<p>最后需要在 <code>src/main/resources/META-INF/</code>文件夹 放置一个<code>app.properties</code>,用于标记客户端身份</p>
+</li>
+</ol>
+<pre><code>app.name=TEST-PROJECT
+</code></pre>
+<h4 id="cat客户端集成">CAT客户端集成</h4>
+<p>部署了客户端后还需要自己去实现监控功能。CAT 本身不提供SpringMVC, MyBatis, DUBBO等 框架或者工具监控的能力，需要使用者自己去埋点实现。</p>
+<ul>
+<li>
+<p>Logview 可视化的调用链路</p>
+</li>
+<li>
+<p>Transaction 监控一段代码运行情况：运行时间统计、次数、错误次数等等</p>
+</li>
+<li>
+<p>Event 记录程序中一个事件记录了多少次，错误了多少次。相比于Transaction，Event没有运行时间统计</p>
+</li>
+<li>
+<p>其他有待深入了解</p>
+</li>
+</ul>
+<h5 id="集成springmvc与mybatis示例">集成SpringMVC与MyBatis示例</h5>
+<p>通过拦截器的方式记录打点，用到了 Transaction 和 Event， 这里写了中文进去，为了便于看清效果</p>
+<p><strong>Spring MVC</strong></p>
+<pre><code class="language-java">public class CatInterceptor implements HandlerInterceptor {
+
+    private ThreadLocal&lt;Transaction&gt; tranLocal = new ThreadLocal&lt;Transaction&gt;();
+
+    @Override
+    public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object o) throws Exception {
+        String uri = request.getRequestURI();
+        // 第一个参数表示Type类型，第二参数表示name名称
+        Transaction t = Cat.newTransaction(&quot;请求路径&quot;, uri);
+        Cat.logEvent(&quot;请求类型&quot;, request.getMethod(), Message.SUCCESS,request.getRequestURL().toString());
+        Cat.logEvent(&quot;请求IP&quot;, request.getMethod(),Message.SUCCESS,request.getRemoteHost());
+        tranLocal.set(t);
+        return true;
+    }
+
+    @Override
+    public void postHandle(HttpServletRequest httpServletRequest, HttpServletResponse httpServletResponse, Object o, ModelAndView modelAndView) throws Exception {
+    }
+
+    @Override
+    public void afterCompletion(HttpServletRequest httpServletRequest, HttpServletResponse httpServletResponse, Object o, Exception e) throws Exception {
+        Transaction t = tranLocal.get();
+        tranLocal.remove();
+        t.setStatus(Transaction.SUCCESS);
+        t.complete();
+    }
+}
+</code></pre>
+<p><strong>MyBatis</strong></p>
+<p>代码篇幅过长，具体可看<strong>源码中框架埋点方案集成</strong>中的介绍</p>
+<p><strong>效果展示</strong></p>
+<p>访问已埋点的客户端路径后，然后打开cat-home服务端查看数据</p>
+<p>查看所有Type</p>
+<figure data-type="image" tabindex="1"><img src="https://raw.githubusercontent.com/netyjq/images/master/cat-1.png" alt="image"></figure>
+<p>查询Type下的所有Name<br>
+<img src="https://raw.githubusercontent.com/netyjq/images/master/cat-2.png" alt="image"></p>
+<p>查看 LogView</p>
+<figure data-type="image" tabindex="2"><img src="https://raw.githubusercontent.com/netyjq/images/master/cat-3.png" alt="image"></figure>
+<h4 id="告警配置">告警配置</h4>
+<ol>
+<li>项目配置信息-项目基本信息</li>
+</ol>
+<figure data-type="image" tabindex="3"><img src="https://raw.githubusercontent.com/netyjq/images/master/cat-4.png" alt="image"></figure>
+<ol start="2">
+<li>应用监控配置-异常告警配置-异常阈<br>
+<img src="https://raw.githubusercontent.com/netyjq/images/master/cat-6.png" alt="image"></li>
+</ol>
+<h3 id="小结">小结</h3>
+<p>经过最近3天对 CAT的研究，总结一下CAT的优缺点。</p>
+<p>优点：</p>
+<ul>
+<li>
+<p>中文友好</p>
+<p>社区及相关文档都是中文的，减少了上手成本。</p>
+</li>
+<li>
+<p>报表丰富</p>
+<p>支持多种维度的报表展示 Transation/Event/LogView等</p>
+</li>
+</ul>
+<p>缺点：</p>
+<ul>
+<li>
+<p>集成工作量较大/代码侵入略强</p>
+<p>一个应用如果要集成CAT成本还是很大的，各种东西都是自己埋点实现，一个普通的应用如果包含 MVC, 数据库, RPC, 日志， 缓存等模块，则都需要去实现相关的埋点代码。</p>
+</li>
+<li>
+<p>文档还不够完善</p>
+<p>目前框架集成和监控告警这块，文档比较混乱。</p>
+</li>
+</ul>
+
+              </div>
+              <div class="toc-container">
+                <ul class="markdownIt-TOC">
+<li>
+<ul>
+<li>
+<ul>
+<li><a href="#cat-%E6%98%AF%E4%BB%80%E4%B9%88">CAT 是什么？</a></li>
+<li><a href="#%E7%AE%80%E5%8D%95%E8%BF%90%E7%94%A8">简单运用</a>
+<ul>
+<li><a href="#%E8%BF%90%E8%A1%8C%E7%8E%AF%E5%A2%83">运行环境</a></li>
+<li><a href="#%E4%B8%8B%E8%BD%BD%E7%BC%96%E8%AF%91">下载编译</a></li>
+<li><a href="#cat%E6%9C%8D%E5%8A%A1%E7%AB%AF%E8%BF%90%E8%A1%8C%E9%83%A8%E7%BD%B2">CAT服务端运行部署</a></li>
+<li><a href="#cat%E5%AE%A2%E6%88%B7%E7%AB%AF%E9%83%A8%E7%BD%B2">CAT客户端部署</a></li>
+<li><a href="#cat%E5%AE%A2%E6%88%B7%E7%AB%AF%E9%9B%86%E6%88%90">CAT客户端集成</a>
+<ul>
+<li><a href="#%E9%9B%86%E6%88%90springmvc%E4%B8%8Emybatis%E7%A4%BA%E4%BE%8B">集成SpringMVC与MyBatis示例</a></li>
+</ul>
+</li>
+<li><a href="#%E5%91%8A%E8%AD%A6%E9%85%8D%E7%BD%AE">告警配置</a></li>
+</ul>
+</li>
+<li><a href="#%E5%B0%8F%E7%BB%93">小结</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+              </div>
+            </div>
+          </article>
+        </div>
+
+        
+          <div class="next-post">
+            <div class="next">下一篇</div>
+            <a href="https://netyjq.github.io/post/springboot-auto-configruation-execute-anaysis">
+              <h3 class="post-title">
+                SpringBoot自动化注解及执行流程分析
+              </h3>
+            </a>
+          </div>
+        
+
+        
+          
+            <link rel="stylesheet" href="https://unpkg.com/gitalk/dist/gitalk.css">
+<script src="https://unpkg.com/gitalk/dist/gitalk.min.js"></script>
+
+<div id="gitalk-container"></div>
+
+<script>
+
+  var gitalk = new Gitalk({
+    clientID: '5d6b9c9336c7edc32dce',
+    clientSecret: 'db95541cd744854feb3628bf9efea21b5fad428d',
+    repo: 'netyjq.github.io',
+    owner: 'netyjq',
+    admin: ['netyjq'],
+    id: (location.pathname).substring(0, 49),      // Ensure uniqueness and length less than 50
+    distractionFreeMode: false  // Facebook-like distraction free mode
+  })
+
+  gitalk.render('gitalk-container')
+
+</script>
+
+          
+
+          
+        
+
+        <div class="site-footer">
+  Powered by <a href="https://github.com/netyjq/" target="_blank">netyjq</a> | 
+  <a class="rss" href="https://netyjq.github.io/atom.xml" target="_blank">RSS</a>
+</div>
+
+<script>
+  hljs.initHighlightingOnLoad()
+
+  let mainNavLinks = document.querySelectorAll(".markdownIt-TOC a");
+
+  // This should probably be throttled.
+  // Especially because it triggers during smooth scrolling.
+  // https://lodash.com/docs/4.17.10#throttle
+  // You could do like...
+  // window.addEventListener("scroll", () => {
+  //    _.throttle(doThatStuff, 100);
+  // });
+  // Only not doing it here to keep this Pen dependency-free.
+
+  window.addEventListener("scroll", event => {
+    let fromTop = window.scrollY;
+
+    mainNavLinks.forEach((link, index) => {
+      let section = document.getElementById(decodeURI(link.hash).substring(1));
+      let nextSection = null
+      if (mainNavLinks[index + 1]) {
+        nextSection = document.getElementById(decodeURI(mainNavLinks[index + 1].hash).substring(1));
+      }
+      if (section.offsetTop <= fromTop) {
+        if (nextSection) {
+          if (nextSection.offsetTop > fromTop) {
+            link.classList.add("current");
+          } else {
+            link.classList.remove("current");    
+          }
+        } else {
+          link.classList.add("current");
+        }
+      } else {
+        link.classList.remove("current");
+      }
+    });
+  });
+
+</script>
+
+      </div>
+    </div>
+  </body>
+</html>

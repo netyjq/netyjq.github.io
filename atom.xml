@@ -1,0 +1,1438 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+    <id>https://netyjq.github.io</id>
+    <title>yjq.wiki</title>
+    <updated>2019-12-10T02:25:50.487Z</updated>
+    <generator>https://github.com/jpmonette/feed</generator>
+    <link rel="alternate" href="https://netyjq.github.io"/>
+    <link rel="self" href="https://netyjq.github.io/atom.xml"/>
+    <subtitle>it&apos;s never too old to learn</subtitle>
+    <logo>https://netyjq.github.io/images/avatar.png</logo>
+    <icon>https://netyjq.github.io/favicon.ico</icon>
+    <rights>All rights reserved 2019, yjq.wiki</rights>
+    <entry>
+        <title type="html"><![CDATA[深入理解Spring事务]]></title>
+        <id>https://netyjq.github.io/post/deep-unstanding-of-spring-transaction</id>
+        <link href="https://netyjq.github.io/post/deep-unstanding-of-spring-transaction">
+        </link>
+        <updated>2019-07-21T10:02:31.000Z</updated>
+        <summary type="html"><![CDATA[<p>这是在公司做的一次内部分享，内容包含：Spring事务基本认识，相关特性的探索与代码验证，一些使用上的坑以及如何避免。</p>
+]]></summary>
+        <content type="html"><![CDATA[<p>这是在公司做的一次内部分享，内容包含：Spring事务基本认识，相关特性的探索与代码验证，一些使用上的坑以及如何避免。</p>
+<!--more-->
+<h1 id="深入理解spring事务">深入理解Spring事务</h1>
+<h2 id="定义">定义</h2>
+<p>数据库事务（简称：事务）是数据库管理系统执行过程中的一个逻辑单位，由一个有限的数据库操作序列构成。</p>
+<p>举例：</p>
+<p>某人要在商店使用电子货币购买100元的东西，当中至少包括两个操作：</p>
+<ol>
+<li>该人账户减少100元</li>
+<li>商店账户增加100元</li>
+</ol>
+<p>支持事务的数据库管理系统（transactional DBMS）就是要确保以上两个操作（整个“事务”）都能完成，或一起取消；否则就会出现100元平白消失或出现的情况。</p>
+<h2 id="acid性质">ACID性质</h2>
+<ul>
+<li>原子性（Atomicity）：事务作为一个整体被执行，包含在其中的对数据库的操作要么全部被执行，要么都不执行。</li>
+<li>一致性（Consistency）：事务应确保数据库的状态从一个一致状态转变为另一个一致状态。一致状态的含义是数据库中的数据应满足完整性约束。</li>
+<li>隔离性（Isolation）：多个事务并发执行时，一个事务的执行不应影响其他事务的执行。</li>
+<li>持久性（Durability）：已被提交的事务对数据库的修改应该永久保存在数据库中。</li>
+</ul>
+<h2 id="编程式事务">编程式事务</h2>
+<p>所谓编程式事务指的是通过编码方式实现事务，即类似于JDBC编程实现事务管理。</p>
+<pre><code class="language-java">transaction.begin();
+try {
+    ...
+    transaction.commit();
+} catch(Exception e) {
+    ...
+    transaction.rollback();
+} finally {
+    ...
+}
+</code></pre>
+<h2 id="声明式事务">声明式事务</h2>
+<h3 id="实现原理">实现原理</h3>
+<figure data-type="image" tabindex="1"><img src="https://docs.spring.io/spring/docs/current/spring-framework-reference/images/tx.png" alt="image"></figure>
+<h3 id="通过xml配置">通过xml配置</h3>
+<p>在 xml 配置中的事务配置信息</p>
+<pre><code class="language-xml">&lt;tx:annotation-driven /&gt;
+&lt;bean id=&quot;transactionManager&quot;
+class=&quot;org.springframework.jdbc.datasource.DataSourceTransactionManager&quot;&gt;
+&lt;property name=&quot;dataSource&quot; ref=&quot;dataSource&quot; /&gt;
+&lt;/bean&gt;
+
+&lt;tx:advice id=&quot;bookTxn&quot; transaction-manager=&quot;transactionManager&quot;&gt;
+
+    &lt;tx:attributes&gt; 
+        &lt;tx:method name=&quot;updateStock&quot; isolation=&quot;READ_UNCOMMITTED&quot;/&gt;
+        &lt;tx:method name=&quot;getStock&quot; isolation=&quot;READ_UNCOMMITTED&quot;/&gt;
+    &lt;/tx:attributes&gt;
+
+&lt;/tx:advice&gt;
+</code></pre>
+<h3 id="2-注解">2. 注解</h3>
+<p>将@Transactional 注解添加到合适的方法上，并设置合适的属性信息</p>
+<pre><code class="language-java">
+@Transactional
+public void test() {
+    // ...
+}
+
+</code></pre>
+<h4 id="transactional注解属性信息">@Transactional注解属性信息</h4>
+<ul>
+<li>name: 当在配置文件中有多个 TransactionManager , 可以用该属性指定选择哪个事务管理器。</li>
+<li>propagation: 事务的传播行为，默认值为 REQUIRED。</li>
+<li>isolation: 事务的隔离级别，默认值为 DEFAULT。</li>
+<li>timeout: 事务的超时时间，默认值为-1。如果超过该时间限制但事务还没有完成，则自动回滚事务。</li>
+<li>read-only: 指定事务是否为只读事务，默认值为 false；为了忽略那些不需要事务的方法，比如读取数据，可以设置 read-only 为 true。</li>
+<li>rollback-for: 用于指定能够触发事务回滚的异常类型，如果有多个异常类型需要指定，各类型之间可以通过逗号分隔。</li>
+<li>no-rollback-for: 抛出 no-rollback-for 指定的异常类型，不回滚事务。</li>
+</ul>
+<p>除此以外，@Transactional 注解也可以添加到类级别上。当把@Transactional 注解放在类级别时，表示所有该类的公共方法都配置相同的事务属性信息。</p>
+<p>当类级别配置了@Transactional，方法级别也配置了@Transactional，应用程序会以方法级别的事务属性信息来管理事务，换言之，方法级别的事务属性信息会覆盖类级别的相关配置信息。</p>
+<h3 id="spring事务隔离级别">Spring事务隔离级别</h3>
+<h4 id="脏读">脏读</h4>
+<p>表示一个事务读取到另一个事务修改还没有提交的记录。</p>
+<pre><code>thread 1   thread 2      
+      |         |
+    write(x)    |
+      |         |
+      |        read(x)
+      |         |
+      |         |
+    rollback    |
+      v         v 
+           value (x) is now dirty (incorrect)
+</code></pre>
+<h4 id="不可重复读">不可重复读</h4>
+<p>不可重复读取是指事务在两次条件相同的读取中，获取到不同的结果。</p>
+<h4 id="幻读">幻读</h4>
+<p>幻读是指当事务不是独立执行时发生的一种现象。<br>
+事务A读取与搜索条件相匹配的若干行。事务B以插入或删除行等方式来修改事务A的结果集，然后再提交。</p>
+<p>最高隔离级别SERIALIZABLE_READ可以保证不出现幻读的问题。</p>
+<h4 id="数据库的四种隔离级别">数据库的四种隔离级别</h4>
+<p>隔离级别是指若干个并发的事务之间的隔离程度，与我们开发时候主要相关的场景包括：脏读取、重复读、幻读。我们可以看<code>org.springframework.transaction.annotation.Isolation</code>枚举类中定义了五个表示隔离级别的值：</p>
+<pre><code class="language-java">public enum Isolation {
+    DEFAULT(-1),
+    READ_UNCOMMITTED(1),
+    READ_COMMITTED(2),
+    REPEATABLE_READ(4),
+    SERIALIZABLE(8);
+}
+</code></pre>
+<ul>
+<li>DEFAULT: 这是默认值，表示使用底层数据库的默认隔离级别。对大部分数据库而言，通常这值就是<code>READ_COMMITTED</code></li>
+<li>READ_UNCOMMITTED: 该隔离级别表示一个事务可以读取另一个事务修改但还没有提交的数据。该级别不能防止脏读和不可重复读，因此很少使用该隔离级别。</li>
+<li>READ_COMMITTED: 该隔离级别表示一个事务只能读取另一个事务已经提交的数据。该级别可以防止脏读，这也是大多数情况下的推荐值。</li>
+<li>REPEATABLE_READ: 该隔离级别表示一个事务在整个过程中可以多次重复执行某个查询，并且每次返回的记录都相同。即使在多次查询之间有新增的数据满足该查询，这些新增的记录也会被忽略。该级别可以防止脏读和不可重复读。</li>
+<li>SERIALIZABLE: 所有的事务依次逐个执行，这样事务之间就完全不可能产生干扰，也就是说，该级别可以防止脏读、不可重复读以及幻读。但是这将严重影响程序的性能。通常情况下也不会用到该级别。</li>
+</ul>
+<p>使用方法：</p>
+<pre><code class="language-java">@Transactional(isolation = Isolation.DEFAULT)
+</code></pre>
+<h3 id="spring事务传播行为">Spring事务传播行为</h3>
+<p>事务的传播行为是指，如果在开始当前事务之前，一个事务上下文已经存在，此时有若干选项可以指定一个事务性方法的执行行为。<br>
+我们可以看<code>org.springframework.transaction.annotation.Propagation</code>枚举类中定义了6个表示传播行为的枚举值：</p>
+<pre><code class="language-java">public enum Propagation {
+    REQUIRED(0),
+    SUPPORTS(1),
+    MANDATORY(2),
+    REQUIRES_NEW(3),
+    NOT_SUPPORTED(4),
+    NEVER(5),
+    NESTED(6);
+}
+</code></pre>
+<ul>
+<li>REQUIRED：如果当前存在事务，则加入该事务；如果当前没有事务，则创建一个新的事务。</li>
+</ul>
+<figure data-type="image" tabindex="2"><img src="https://docs.spring.io/spring/docs/current/spring-framework-reference/images/tx_prop_required.png" alt="image"></figure>
+<ul>
+<li>SUPPORTS：如果当前存在事务，则加入该事务；如果当前没有事务，则以非事务的方式继续运行。</li>
+<li>MANDATORY：如果当前存在事务，则加入该事务；如果当前没有事务，则抛出异常。</li>
+<li>REQUIRES_NEW：创建一个新的事务，如果当前存在事务，则把当前事务挂起。</li>
+<li>NOT_SUPPORTED：以非事务方式运行，如果当前存在事务，则把当前事务挂起。</li>
+<li>NEVER：以非事务方式运行，如果当前存在事务，则抛出异常。</li>
+<li>NESTED：如果当前存在事务，则创建一个事务作为当前事务的嵌套事务来运行；如果当前没有事务，则该取值等价于REQUIRED。</li>
+</ul>
+<h2 id="延伸">延伸</h2>
+<h3 id="spring事务失效的几种情况">Spring事务失效的几种情况</h3>
+<h4 id="1-自调用">1. 自调用</h4>
+<p>原因：</p>
+<pre><code class="language-java">
+@Service
+class A {
+    @Transactinal
+    method b(){...}
+    
+    method a(){    //标记1
+        b();
+    }
+}
+</code></pre>
+<pre><code class="language-java">// Spring扫描注解后，创建了另外一个代理类，并为有注解的方法插入一个startTransaction()方法：
+class proxy$A {
+    A objectA = new A();
+    method b(){    //标记2
+        startTransaction();
+        objectA.b();
+    }
+ 
+    method a(){    //标记3
+        objectA.a();    //由于a()没有注解，所以不会启动transaction，而是直接调用A的实例的a()方法
+    }
+}
+</code></pre>
+<p>解决方法：</p>
+<ul>
+<li>把这两个方法分开到不同的类中；</li>
+<li>把注解加到类名上面；</li>
+</ul>
+<h4 id="2-目标方法非public">2. 目标方法非public</h4>
+<h4 id="3-事务方法之间的互相调用不会开启新的事务">3. 事务方法之间的互相调用不会开启新的事务</h4>
+<p>Spring采用动态代理机制来实现事务控制，而动态代理最终都是要调用原始对象的，而原始对象在去调用方法时，是不会再触发代理了。</p>
+<h3 id="事务超时时间为何不生效">事务超时时间为何不生效？</h3>
+<p>下面代码是不生效的</p>
+<pre><code class="language-java">public void testTimeout() throws InterruptedException {  
+    System.out.println(System.currentTimeMillis());  
+    JdbcTemplate jdbcTemplate = new JdbcTemplate(ds);  
+    jdbcTemplate.execute(&quot; update test set hobby = hobby || '1'&quot;);  
+    System.out.println(System.currentTimeMillis());  
+    Thread.sleep(3000L);  
+}  
+</code></pre>
+<p>下面代码是生效的</p>
+<pre><code class="language-java">public void testTimeout() throws InterruptedException {  
+    Thread.sleep(3000L);  
+    System.out.println(System.currentTimeMillis());  
+    JdbcTemplate jdbcTemplate = new JdbcTemplate(ds);  
+    jdbcTemplate.execute(&quot; update test set hobby = hobby || '1'&quot;);  
+    System.out.println(System.currentTimeMillis());  
+}  
+</code></pre>
+<p>读者可以参考 https://jinnianshilongnian.iteye.com/blog/1986023</p>
+<h3 id="如何验证传播行为与隔离级别">如何验证传播行为与隔离级别？</h3>
+<p>下面通过一段转账示例代码来验证Spring传播行为与隔离级别</p>
+<ol>
+<li>DAO层</li>
+</ol>
+<p>dao层使用jdbc的方式实现2个操作，转账（更新余额）和账号查询。</p>
+<pre><code class="language-java">@Repository
+public class AccountDao extends JdbcDaoSupport {
+
+    @Autowired
+    public void setDs(DataSource dataSource) {
+        setDataSource(dataSource);
+    }
+
+    public void transfer(int fromAccountId, int toAccountId, int amount) throws Exception {
+        Account fromAccount = getAccount(fromAccountId);
+        Account toAccount = getAccount(toAccountId);
+
+        System.out.println(String.format(&quot;%s 账户余额: %s&quot;, fromAccount.getName(), fromAccount.getBalance()));
+        System.out.println(String.format(&quot;%s 账户余额: %s&quot;, toAccount.getName(), toAccount.getBalance()));
+
+        if (fromAccount.getBalance() &lt; amount) {
+            throw new RuntimeException(&quot;Cannot transfer, account doesn't have enough money!&quot;);
+        }
+
+        int fromAccountBalance = fromAccount.getBalance() - amount;
+        int toAccountBalance = toAccount.getBalance() + amount;
+
+        getJdbcTemplate().update(&quot;UPDATE ACCOUNT SET BALANCE = ? WHERE ID = ?&quot;, fromAccountBalance, fromAccountId);
+        System.out.println(String.format(&quot;%s 转账: %s, 余额: %s&quot;, fromAccount.getName(), amount, fromAccountBalance));
+
+        getJdbcTemplate().update(&quot;UPDATE ACCOUNT SET BALANCE = ? WHERE ID = ?&quot;, toAccountBalance, toAccountId);
+        System.out.println(String.format(&quot;%s 入账: %s, 余额: %s&quot;, toAccount.getName(), amount, toAccountBalance));
+    }
+
+    public Account getAccount(int accountId) {
+        Account account =  getJdbcTemplate().queryForObject(&quot;select * from account where id = ?&quot;, new Object[]{accountId}, new RowMapper&lt;Account&gt;(){
+            @Override
+            public Account mapRow(ResultSet rs, int rowNum) throws SQLException {
+                Account account = new Account();
+                account.setBalance(rs.getInt(&quot;balance&quot;));
+                account.setName(rs.getString(&quot;name&quot;));
+                account.setId(rs.getInt(&quot;id&quot;));
+                return account;
+            }
+        });
+        if (null == account) {
+            throw new RuntimeException(&quot;Account &quot; + accountId + &quot; doesn't exists&quot;);
+        }
+        return account;
+    }
+
+    public void print(int fromAccountId, int toAccountId) {
+        Account fromAccount = getAccount(fromAccountId);
+        Account toAccount = getAccount(toAccountId);
+        System.out.println(String.format(&quot;%s 账户余额: %s&quot;, fromAccount.getName(), fromAccount.getBalance()));
+        System.out.println(String.format(&quot;%s 账户余额: %s&quot;, toAccount.getName(), toAccount.getBalance()));
+    }
+}
+</code></pre>
+<ol start="2">
+<li>Service层</li>
+</ol>
+<p>service层有2个方法加入了<code>@Transactional</code>注解，分别是转账和余额查询操作。这里实现的逻辑是。在转账事务完成但还没有提交之前，另一个事务读取账号信息打印余额，通过修改<code>@Transactional</code>属性进行对应测试。</p>
+<pre><code class="language-java">@Service
+public class AccountServiceImpl implements IAccountService {
+
+    @Autowired
+    private AccountDao accountDao;
+    
+    @Override
+    @Transactional(rollbackFor = Exception.class, timeout = 1, isolation = Isolation.READ_UNCOMMITTED, propagation = Propagation.REQUIRED)
+    public void doTransfer(int fromAccountId, int toAccountId, int amount) throws Exception {
+        try {
+            synchronized (LockUtil.lock) {
+                accountDao.transfer(fromAccountId, toAccountId, amount);
+                System.out.println(&quot;转账线程开始等待&quot;);
+                LockUtil.lock.wait();
+                System.out.println(&quot;转账线程被唤醒了&quot;);
+                Integer.valueOf(&quot;&quot;);
+            }
+        } catch (Exception e) {
+            System.out.println(&quot;发生异常. 事务开始回滚&quot;);
+            throw e;
+        }
+    }
+
+    @Transactional(isolation = Isolation.READ_UNCOMMITTED, propagation = Propagation.REQUIRED)
+    public void methodB(int fromAccountId, int toAccountId) {
+        synchronized (LockUtil.lock) {
+            System.out.println(&quot;--------------------&quot;);
+            System.out.println(String.format(&quot;%s: 事务未提交前读取账户数据&quot;, Thread.currentThread().getName()));
+            print(fromAccountId, toAccountId);
+            LockUtil.lock.notify();
+            System.out.println(&quot;发出唤醒通知&quot;);
+            System.out.println(&quot;--------------------&quot;);
+        }
+    }
+    
+    public void print(int fromAccountId, int toAccountId) {
+        accountDao.print(fromAccountId, toAccountId);
+    }
+
+
+}
+
+</code></pre>
+<ol start="3">
+<li>test</li>
+</ol>
+<p>分别启动2个线程，转账线程先启动，然后再启动读取线程。</p>
+<pre><code class="language-java">@Test
+public void test() throws InterruptedException {
+    new Thread(new Runnable() {
+        @Override
+        public void run() {
+            try {
+                accountService.doTransfer(1,2,100);
+            } catch (Exception e) {
+                e.printStackTrace();
+                accountService.print(1,2);
+            }
+        }
+    }).start();
+    Thread.sleep(1000);
+    new Thread(new Runnable() {
+        @Override
+        public void run() {
+            accountService.methodB(1,2);
+        }
+    }).start();
+}
+</code></pre>
+<p>运行结果如下：</p>
+<pre><code>18:58:48.484 logback [Thread-4] DEBUG o.s.j.d.DataSourceTransactionManager - Creating new transaction with name [com.yjq.service.impl.AccountServiceImpl.doTransfer]: PROPAGATION_REQUIRED,ISOLATION_READ_UNCOMMITTED,timeout_1; '',-java.lang.Exception
+18:58:48.993 logback [Thread-4] DEBUG o.s.j.d.DataSourceTransactionManager - Acquired Connection [com.mysql.jdbc.JDBC4Connection@6163d8eb] for JDBC transaction
+18:58:48.997 logback [Thread-4] DEBUG o.s.j.d.DataSourceTransactionManager - Switching JDBC Connection [com.mysql.jdbc.JDBC4Connection@6163d8eb] to manual commit
+Tom 账户余额: 3000
+Bob 账户余额: 3000
+Tom 转账: 100, 余额: 2900
+Bob 入账: 100, 余额: 3100
+转账线程开始等待
+18:58:49.470 logback [Thread-6] DEBUG o.s.j.d.DataSourceTransactionManager - Creating new transaction with name [com.yjq.service.impl.AccountServiceImpl.methodB]: PROPAGATION_REQUIRED,ISOLATION_READ_UNCOMMITTED; ''
+18:58:49.474 logback [Thread-6] DEBUG o.s.j.d.DataSourceTransactionManager - Acquired Connection [com.mysql.jdbc.JDBC4Connection@67728b47] for JDBC transaction
+18:58:49.475 logback [Thread-6] DEBUG o.s.j.d.DataSourceTransactionManager - Switching JDBC Connection [com.mysql.jdbc.JDBC4Connection@67728b47] to manual commit
+--------------------
+Thread-6: 事务未提交前读取账户数据
+Tom 账户余额: 2900
+Bob 账户余额: 3100
+发出唤醒通知
+--------------------
+转账线程被唤醒了
+发生异常. 事务开始回滚
+18:58:49.479 logback [Thread-6] DEBUG o.s.j.d.DataSourceTransactionManager - Initiating transaction commit
+18:58:49.479 logback [Thread-6] DEBUG o.s.j.d.DataSourceTransactionManager - Committing JDBC transaction on Connection [com.mysql.jdbc.JDBC4Connection@67728b47]
+18:58:49.479 logback [Thread-4] DEBUG o.s.j.d.DataSourceTransactionManager - Initiating transaction rollback
+18:58:49.479 logback [Thread-4] DEBUG o.s.j.d.DataSourceTransactionManager - Rolling back JDBC transaction on Connection [com.mysql.jdbc.JDBC4Connection@6163d8eb]
+18:58:49.480 logback [Thread-6] DEBUG o.s.j.d.DataSourceTransactionManager - Releasing JDBC Connection [com.mysql.jdbc.JDBC4Connection@67728b47] after transaction
+18:58:49.481 logback [Thread-4] DEBUG o.s.j.d.DataSourceTransactionManager - Releasing JDBC Connection [com.mysql.jdbc.JDBC4Connection@6163d8eb] after transaction
+java.lang.NumberFormatException: For input string: &quot;&quot;
+	at java.lang.NumberFormatException.forInputString(NumberFormatException.java:65)
+	at java.lang.Integer.parseInt(Integer.java:592)
+	at java.lang.Integer.valueOf(Integer.java:766)
+	at com.yjq.service.impl.AccountServiceImpl.doTransfer(AccountServiceImpl.java:40)
+	at com.yjq.service.impl.AccountServiceImpl$$FastClassBySpringCGLIB$$2cbd8822.invoke(&lt;generated&gt;)
+	at org.springframework.cglib.proxy.MethodProxy.invoke(MethodProxy.java:204)
+	at org.springframework.aop.framework.CglibAopProxy$CglibMethodInvocation.invokeJoinpoint(CglibAopProxy.java:738)
+	at org.springframework.aop.framework.ReflectiveMethodInvocation.proceed(ReflectiveMethodInvocation.java:157)
+	at org.springframework.transaction.interceptor.TransactionInterceptor$1.proceedWithInvocation(TransactionInterceptor.java:99)
+	at org.springframework.transaction.interceptor.TransactionAspectSupport.invokeWithinTransaction(TransactionAspectSupport.java:282)
+	at org.springframework.transaction.interceptor.TransactionInterceptor.invoke(TransactionInterceptor.java:96)
+	at org.springframework.aop.framework.ReflectiveMethodInvocation.proceed(ReflectiveMethodInvocation.java:179)
+	at org.springframework.aop.framework.CglibAopProxy$DynamicAdvisedInterceptor.intercept(CglibAopProxy.java:673)
+	at com.yjq.service.impl.AccountServiceImpl$$EnhancerBySpringCGLIB$$1380cbfd.doTransfer(&lt;generated&gt;)
+	at com.yjq.test.TransactionTest$1.run(TransactionTest.java:40)
+	at java.lang.Thread.run(Thread.java:748)
+Tom 账户余额: 3000
+Bob 账户余额: 3000
+
+</code></pre>
+<p>这里通过日志可以很清楚的了解到事务执行过程，读者可以修改注解其它配置，本文暂不赘述。</p>
+<h2 id="参考资料">参考资料</h2>
+<ol>
+<li>
+<p><a href="https://docs.spring.io/spring/docs/current/spring-framework-reference/data-access.html#transaction">Spring Doc About Transaction Management</a></p>
+</li>
+<li>
+<p><a href="https://jinnianshilongnian.iteye.com/blog/1986023">Spring事务超时时间可能存在的错误认识</a></p>
+</li>
+</ol>
+]]></content>
+    </entry>
+    <entry>
+        <title type="html"><![CDATA[开源项目——数据中心平台]]></title>
+        <id>https://netyjq.github.io/post/sql-query-data-center</id>
+        <link href="https://netyjq.github.io/post/sql-query-data-center">
+        </link>
+        <updated>2019-06-14T07:33:53.000Z</updated>
+        <content type="html"><![CDATA[<h2 id="项目简介">项目简介</h2>
+<p>一个能实现任意动态sql执行、统一管理、异常监控的数据查询平台。</p>
+<p>https://github.com/netyjq/data-center</p>
+<h2 id="背景">背景</h2>
+<p>现在业务方每次有数据查询需求，就需要数据中心配合做sql查询，同时提供RPC接口返回DTO数据结构。伸缩性较差，人力成本高。</p>
+<h2 id="目标">目标</h2>
+<p>实现一套现代化的数据中心平台，业务方自行维护sql，无需数据中心耦合业务需求。</p>
+<h2 id="核心需求">核心需求</h2>
+<ol>
+<li>SQL管理</li>
+<li>监控告警</li>
+<li>权限管理</li>
+<li>报表统计</li>
+<li>...</li>
+</ol>
+<h2 id="方案">方案</h2>
+<h3 id="设计图">设计图</h3>
+<figure data-type="image" tabindex="1"><img src="http://ww1.sinaimg.cn/large/c9025ee6ly1g2be63rlb4j20l40kpgm4.jpg" alt=""></figure>
+<h3 id="技术方案">技术方案</h3>
+<h4 id="dubborpc-freemarker解析sql-mybatis执行sql">Dubbo(RPC) + Freemarker(解析SQL) + Mybatis(执行SQL)</h4>
+<p>假设下面的sql需要根据parentId和name动态查询，其中parent_id和name有值传递过来就参与查询，否则不查询</p>
+<pre><code class="language-sql">SELECT * from unit_info where and parent_id = #{parentId} and name = #{name};
+</code></pre>
+<p>那么需要在数据中心配置下面的sql模板：</p>
+<pre><code class="language-sql">SELECT * from unit_info where 1=1 &lt;#if parentId??&gt;and parent_id = #{parentId}&lt;/#if&gt; &lt;#if name?? &amp;&amp; name != ''&gt;and name = #{name}&lt;/#if&gt;
+</code></pre>
+<p>接下来业务方通过Dubbo调用了数据中心的RPC接口，并传递了参数parentId=1，最终sql被解析并被mybatis执行。</p>
+<pre><code class="language-sql">SELECT * from unit_info where 1=1 and parent_id = 1
+</code></pre>
+<h4 id="表结构设计">表结构设计</h4>
+<ul>
+<li>user_info 用户信息表</li>
+<li>user_group 用户组</li>
+<li>user_group_mapping 用户、组关联表</li>
+<li>app_info 应用表</li>
+<li>app_user_mapping 应用和用户关联表</li>
+<li>sql_template sql模板表</li>
+<li>sql_operation_record sql操作记录表</li>
+<li>api_call_record api调用记录表 <strong>分多表</strong></li>
+<li>alarm_history 告警记录表 <strong>分多表</strong></li>
+<li>alarm_config 告警配置表</li>
+</ul>
+<figure data-type="image" tabindex="2"><img src="https://raw.githubusercontent.com/netyjq/data-center/master/script/table.jpg" alt=""></figure>
+<h4 id="项目模块">项目模块</h4>
+<ol>
+<li>data-center-admin 管理员后台 部署形式：war</li>
+<li>data-center-service 提供业务接口  部署形式war</li>
+<li>data-center-client 封装接口给业务方 部署形式jar</li>
+<li>script sql脚本</li>
+</ol>
+<h3 id="业务流程">业务流程</h3>
+<ol>
+<li>业务方申请应用，得到appId</li>
+<li>配置sql，包含<strong>sqltext</strong>、<strong>是否分页</strong>、<strong>表字段映射</strong>，系统自带校验和测试功能。</li>
+<li>业务方集成数据中心client jar，配置duboo接口，调用api并传递对应参数</li>
+<li>数据中心响应请求，异步记录此次调用信息。</li>
+</ol>
+<h3 id="sql管理">SQL管理</h3>
+<p>供业务方进行sql模板的配置(如果动态条件则需要使用freemarker编写sql模板) 、sql的模拟测试、上下架管理等功能。</p>
+<h3 id="监控告警">监控告警</h3>
+<p>支持2种形式的告警：<strong>ERROR_COUNT</strong>以及<strong>SLOW_COUNT</strong>。系统通过定时扫描，对符合条件的查询以邮件的形式发送到用户或组。</p>
+<h3 id="报表统计">报表统计</h3>
+<p>数据中心会记录每次的调用请求，为日后报表统计类业务做铺垫。同时Admin后台也将以图形的方式展现部分维度下的Top调用量情况。</p>
+<h3 id="权限管理">权限管理</h3>
+<ol>
+<li>用户组与用户间的关系 —— 用于告警发送邮件以及SQL管理权限的判定</li>
+<li>用户组与应用的关系 —— 用于告警发送邮件</li>
+<li>应用与sql间的关系 —— 用于应用方调用权限的判定</li>
+</ol>
+<h2 id="预览">预览</h2>
+<figure data-type="image" tabindex="3"><img src="https://raw.githubusercontent.com/netyjq/data-center/master/script/login.png" alt="登录页"></figure>
+<figure data-type="image" tabindex="4"><img src="https://raw.githubusercontent.com/netyjq/data-center/master/script/index.png" alt="首页"></figure>
+<h2 id="风险点">风险点</h2>
+<ol>
+<li>负载风险：宕机引发整体服务不可用</li>
+<li>流控风险：某个业务查询时间过长过高影响其它业务正常运行</li>
+<li>安全风险：大表查询未limit、未走索引、全表扫描；未按需查询、大字段未过滤；锁表；SQL注入：Update、Delete、Truncate等</li>
+<li>其它待补充</li>
+</ol>
+]]></content>
+    </entry>
+    <entry>
+        <title type="html"><![CDATA[使用freemarker实现mybatis动态sql]]></title>
+        <id>https://netyjq.github.io/post/mybatis-dynamic-sql-by-freemarker</id>
+        <link href="https://netyjq.github.io/post/mybatis-dynamic-sql-by-freemarker">
+        </link>
+        <updated>2019-06-04T10:11:22.000Z</updated>
+        <content type="html"><![CDATA[<p>一般情况下使用mybatis自带的动态标签已经能够完成业务需求，但是假设有这样一个场景：sql是外部传入的，而且是携带参数的，你需要帮其执行并告知结果。</p>
+<p>上个月接到一个数据查询平台的全新项目，需要执行业务方传入的sql与查询参数，然后提交给mybatis执行返回结果。接下来聊聊我是如何实现mybatis的动态sql和执行的。</p>
+<h3 id="原始方式">原始方式</h3>
+<p>一般我们都知道mybatis执行任意sql最简单的方式可以这样做，先在mapper.xml中这么写，</p>
+<pre><code>&lt;select id=&quot;select&quot; resultType=&quot;map&quot;&gt;
+    ${sql}
+&lt;/select&gt;
+</code></pre>
+<p>然后在代码中传入参数</p>
+<pre><code>// ... 略
+
+@Autowired
+private IAppMapper appMapper;
+
+// ... 略
+
+Map&lt;String,String&gt; map = new HashMap&lt;String,String&gt;;
+map.put(&quot;sql&quot;, &quot;select * from app_info where app_id = 1 and name = '数据查询平台'&quot;);
+
+List&lt;AppInfo&gt; appInfoList = appMapper.select(map);
+
+// ... 略
+
+</code></pre>
+<p>这样就可以完成一个简单的<code>sql</code>执行了。</p>
+<h3 id="简单改进">简单改进</h3>
+<p>上一步的<code>app_id</code> 和 <code>name</code>的值都是写死的，如果变成外部传入呢？</p>
+<p>其实这个也非常简单，我们把 <code>sql</code>,<code>name</code>,<code>app_id</code> 都当成条件传入就可以了。</p>
+<pre><code>// ... 略
+
+@Autowired
+private IAppMapper appMapper;
+
+// ... 略
+
+Map&lt;String,String&gt; map = new HashMap&lt;String,String&gt;;
+map.put(&quot;sql&quot;, &quot;select * from app_info where app_id = #{appId} and name = #{name}&quot;);
+map.put(&quot;appId&quot;, &quot;abc&quot;);
+map.put(&quot;name&quot;, &quot;数据查询平台&quot;);
+List&lt;AppInfo&gt; appInfoList = appMapper.select(map);
+
+// ... 略
+
+</code></pre>
+<h3 id="条件动态查询">条件动态查询</h3>
+<p>上一个方案中查询条件是固定的，如何变得灵活一些：当传入了<code>name</code>和<code>appId</code>字段时则参与查询，否则不参与查询？</p>
+<p>我们知道mybatis有一系列的ognl标签来实现动态的条件，让开发者决定某参数是否能参与查询，显然在这里<code>&lt;if&gt;</code>标签是无法传入到上面的<code>sql</code>中。</p>
+<p><code>mybatis</code>处理动态 <code>sql</code> 时，所有动态 <code>sql</code> 的标签都会处理为<code>SqlNode</code>对象，包含<code>${}</code>的也会处理为<code>TextSqlNode</code> 对象。</p>
+<p>如果<code>${sql}</code>中的内容包含嵌套的<code>${}</code>和<code>&lt;if&gt;</code>,<code>&lt;where&gt;</code>等标签，当 <code>mybatis</code>解析 <code>xml</code> 为 <code>SqlNode</code> 对象时，<code>xml</code> <code>&lt;select&gt;</code>元素包含的内容只有<code>${sql}</code>，也就是说只有<code>${sql}</code>会被解析；虽然在运行时这个参数字符串中可能包含的<code>${}</code>和<code>&lt;if&gt;</code>,<code>&lt;where&gt;</code>等标签，但是这都发生在 <code>mybatis</code> 解析后。</p>
+<p>因此当这些内容作为字符串中的一部分出现时，他们不会被特殊处理，他们只是<code>sql</code>中的一部分，只是原样输出，最终交给数据执行将出现语法异常。</p>
+<p>此时可以借助模板标记语言来解决此问题，<code>freemaker</code>是一款流行稳定的模板标记语言，借助<code>freemarker</code>，我们可以把代码做这样的修改：</p>
+<pre><code>// ... 略
+
+@Autowired
+private IAppMapper appMapper
+
+// ... 略
+
+Map&lt;String,String&gt; map = new HashMap&lt;String,String&gt;;
+map.put(&quot;appId&quot;, &quot;abc&quot;);
+map.put(&quot;name&quot;, &quot;数据查询平台&quot;);
+
+String sql = &quot;select * from app_info where 1 = 1 &lt;#if appId??&gt;and app_id = &lt;noparse&gt;#{appId}&lt;/noparse&gt;&lt;/#if&gt; &lt;#if appName??&gt;and app_name = &lt;#noparse&gt;#{name}&lt;/#noparse&gt;&lt;/#if&gt;&quot;;
+
+Configuration cfg = new Configuration(freemarker.template.Configuration.VERSION_2_3_0);
+cfg.setDefaultEncoding(&quot;UTF-8&quot;);
+cfg.setLogTemplateExceptions(false);
+cfg.setTemplateLoader(new StringTemplateLoader());
+
+Template template = cfg.getTemplate(&quot;templateId&quot;);
+template.process(map, out);
+
+// 经过渲染后sql将会变成： select * from app_info where 1=1 and app_id = #{appId} and app_name = #{name}
+
+sql = out.toString();
+
+map.put(&quot;sql&quot;, sql);  
+
+List&lt;AppInfo&gt; appInfoList = appMapper.select(map);
+
+// ... 略
+
+</code></pre>
+<p>这里需要特别注意 <code>#{appId}</code> <code>#{name}</code> 要留给<code>mybatis</code>解析，而不是被<code>freemarker</code>解析，借助<code>&lt;#noparse&gt;&lt;/#noparse&gt;</code> 标签，可以避免<code>freemarker</code>解析<code>#{xxx}</code>和<code>${xxx}</code></p>
+]]></content>
+    </entry>
+    <entry>
+        <title type="html"><![CDATA[如何编写技术方案文档]]></title>
+        <id>https://netyjq.github.io/post/how-to-write-a-technical-solution-document</id>
+        <link href="https://netyjq.github.io/post/how-to-write-a-technical-solution-document">
+        </link>
+        <updated>2019-04-22T02:17:45.000Z</updated>
+        <summary type="html"><![CDATA[<p>技术方案文档是软件开发人员一项必备的技能，在我看来技术方案文档就是在项目开发前把潜在的风险和解决问题的思路都梳理清楚，避免开发过程中思路不明确，又或者后期难以维护和拓展。一份好的文档对我们的项目开发无疑是事半功倍的，养成写文档的习惯很重要，写一份思路清晰结构明了的文档更重要，那么问题来了，文档该怎么写呢？</p>
+<p>根据我自身经验，我列举了一份文档的结构说明，注意，仅供参考。</p>
+]]></summary>
+        <content type="html"><![CDATA[<p>技术方案文档是软件开发人员一项必备的技能，在我看来技术方案文档就是在项目开发前把潜在的风险和解决问题的思路都梳理清楚，避免开发过程中思路不明确，又或者后期难以维护和拓展。一份好的文档对我们的项目开发无疑是事半功倍的，养成写文档的习惯很重要，写一份思路清晰结构明了的文档更重要，那么问题来了，文档该怎么写呢？</p>
+<p>根据我自身经验，我列举了一份文档的结构说明，注意，仅供参考。</p>
+<!--more-->
+<h2 id="项目背景">项目背景</h2>
+<p>介绍当前项目的痛点</p>
+<h2 id="目标">目标</h2>
+<p>抽象概括需要达到的效果</p>
+<h2 id="核心需求">核心需求</h2>
+<p>本质上需要提供什么能力</p>
+<h2 id="现状和问题分析">现状和问题分析</h2>
+<p>对现状和问题进行充分的收集和分析，把问题收集完整</p>
+<h2 id="解决方案">解决方案</h2>
+<ol>
+<li>做什么？</li>
+<li>怎么做？</li>
+<li>什么时候做？</li>
+</ol>
+<h2 id="小结">小结</h2>
+<p>明确风险点，时间点，以及需求优先级</p>
+]]></content>
+    </entry>
+    <entry>
+        <title type="html"><![CDATA[一份来自菜鸟和企朋的面经]]></title>
+        <id>https://netyjq.github.io/post/april-2019-interview-experience</id>
+        <link href="https://netyjq.github.io/post/april-2019-interview-experience">
+        </link>
+        <updated>2019-04-18T12:05:44.000Z</updated>
+        <summary type="html"><![CDATA[<p>本人工作年限3.5年，就职于公司共享服务部，平时主要给团队做一些中间件和工具，也接触一些业务。今年的金三银四，我准备了一番去外面看了看机会。在此记录2019年的2场面试。</p>
+]]></summary>
+        <content type="html"><![CDATA[<p>本人工作年限3.5年，就职于公司共享服务部，平时主要给团队做一些中间件和工具，也接触一些业务。今年的金三银四，我准备了一番去外面看了看机会。在此记录2019年的2场面试。</p>
+<!-- more -->
+<h2 id="阿里巴巴菜鸟">阿里巴巴菜鸟</h2>
+<ol>
+<li>
+<p>说说现在做哪些项目？</p>
+</li>
+<li>
+<p>OpenApI开放平台你做了哪些优化，有哪些成绩？</p>
+</li>
+<li>
+<p>你提到的Dubbo的反序列化和java中的Serializable序列化有社么区别？</p>
+</li>
+<li>
+<p>你刚提到反序列化成HashMap，除了这个有想过其它方案吗？</p>
+</li>
+<li>
+<p>你说你用到了Netty，那你知道NIO\BIO的区别吗？</p>
+</li>
+<li>
+<p>那如果100个链接，NIO、BIO各自需要多少个线程</p>
+</li>
+<li>
+<p>你的项目用的哪种垃圾收集器？哪种垃圾回收算法</p>
+</li>
+<li>
+<p>你还知道哪些垃圾回收算法</p>
+</li>
+<li>
+<p>说说你堆JVM的认识</p>
+</li>
+<li>
+<p>你平时如何处理线上的问题，比如Full GC, 内存，CPU这块</p>
+</li>
+<li>
+<p>如果让你设计一个高并发秒杀系统，你如何设计？</p>
+</li>
+<li>
+<p>你刚提到Zookeeper分布式锁，zk如何实现分布式锁？</p>
+</li>
+<li>
+<p>zk实现分布式锁的底层原理是什么？</p>
+</li>
+<li>
+<p>项目中有用到分表分库吗？谈谈你的设计？</p>
+</li>
+<li>
+<p>你刚讲到取模，一致性Hash算法了解吗？说说原理</p>
+</li>
+<li>
+<p>你的项目用到了哪些领域模型，是如何进行分层设计的？</p>
+</li>
+<li>
+<p>你对你的职业规划是怎么样的？</p>
+</li>
+<li>
+<p>你对你下份工作有哪些期望？</p>
+</li>
+<li>
+<p>业余时间有哪些爱好，学习哪些技术？</p>
+</li>
+<li>
+<p>你现在工作强度大吗？每天大概几点下班？</p>
+</li>
+</ol>
+<p>好了，我问完了，咱们今天先到这儿，我回去和同事商量下，后续再联系你</p>
+<h2 id="企朋">企朋</h2>
+<h3 id="一面-技术面">一面  技术面</h3>
+<ol>
+<li>自我介绍</li>
+<li>配置中心为什么自己实现一套，而不用开源的方案？</li>
+<li>你如何理解配置中心？</li>
+<li>你觉得Zookeeper是用来解决什么问题的？</li>
+<li>为什么用到Netty？是什么样的业务场景？</li>
+<li>你提到的Redis限流是如何实现的？是基于什么模型？你还知道什么方式限流？</li>
+<li>并发包有用到过吗？如何使用线程池？除了ThreadPoolExecutor还有什么方式使用线程池？</li>
+<li>CountDownLatch有用过吗？如果业务执行很长时间会发生什么？如何避免？</li>
+<li>volatile有什么作用？底层是什么原理？</li>
+<li>有没有用过Spring的特性解决一些问题？</li>
+<li>说说SpringBean的生命周期</li>
+<li>如何在Bean初始化和销毁前做一些事情？有实际应用经验吗？</li>
+<li>mysql A、B字段联合索引，<code>where A=xx and B=xx</code>会走索引吗？<code>where B=xx and A=xx</code>会走索引吗？<code>where B=xx</code>会走索引吗？<code>where A=xx</code>会走索引吗？</li>
+<li>mysql索引有哪几种类型？</li>
+<li>mysql索引底层数据结构是什么样的？</li>
+<li>如果一次性取了一个很大的全表数据，数据库会发生什么？</li>
+<li>如果mysql查询特别慢，你如何排查问题？</li>
+<li>类加载机制了解吗？有哪些类加载器？</li>
+<li>双亲委派模型是什么？</li>
+<li>有什么想问我的吗？</li>
+</ol>
+<h3 id="二面-联合创始人面">二面 联合创始人面</h3>
+<ol>
+<li>自我介绍</li>
+<li>项目中OpenAPI工作流程</li>
+<li>OpenAPI token是如何设计的，token被盗用存在什么风险？你有想过如何避免吗？</li>
+<li>OpenAPI调用内部的服务，如果服务响应很慢怎么办？会影响调用其它服务吗？你觉得应该如何处理？</li>
+<li>画下OpenAPI开放平台结构图</li>
+<li>我觉得你最近几份工作时间都不是很长，最近一份工作是什么原因不想待了？</li>
+<li>你大学和工作期间都是怎么学习的？</li>
+<li>你最近在学习哪些东西？</li>
+<li>你对你未来1-3年的规划是什么？</li>
+<li>你觉得架构师是怎样的？</li>
+<li>你觉得你还应该学习或者补充哪些知识？</li>
+<li>你觉得你最擅长的是什么</li>
+<li>你对薪资有什么期望？</li>
+<li>有什么想问我的吗？</li>
+</ol>
+<h2 id="小结">小结</h2>
+<p>其实这些问题都不难，关键是要做充分的准备，除了技术知识的储备，在表达能力上以及一些非技术性问题和聊天也要练习台词和说法方式。</p>
+<p>附上我的面试知识点储备总结：<br>
+<a href="https://github.com/netyjq/Knowledge-System-For-Interview">https://github.com/netyjq/Knowledge-System-For-Interview</a></p>
+]]></content>
+    </entry>
+    <entry>
+        <title type="html"><![CDATA[使用VisualVM进行性能分析]]></title>
+        <id>https://netyjq.github.io/post/use-visualvm-to-analyis-performance</id>
+        <link href="https://netyjq.github.io/post/use-visualvm-to-analyis-performance">
+        </link>
+        <updated>2018-11-19T12:08:26.000Z</updated>
+        <summary type="html"><![CDATA[<p>VisualVM是一个集成了命令行JDK工具和轻量级概要分析功能的可视化工具。专为开发和线上运行使用而设计。本文翻译自国外大神greyfocus的博客文章，重点对VisualVM的Sampling(采样)和Profiling(分析)模块有详细的介绍。</p>
+]]></summary>
+        <content type="html"><![CDATA[<p>VisualVM是一个集成了命令行JDK工具和轻量级概要分析功能的可视化工具。专为开发和线上运行使用而设计。本文翻译自国外大神greyfocus的博客文章，重点对VisualVM的Sampling(采样)和Profiling(分析)模块有详细的介绍。</p>
+<!-- more -->
+<h3 id="sampling-vs-profiling">Sampling vs Profiling</h3>
+<p>首先，让我们理解Sampling(采样)和Profiling(分析)之间的区别，这是一个关键的先决条件。</p>
+<h4 id="profiling">Profiling</h4>
+<p>Profiling涉及检测整个应用程序代码或仅检测某些类，以便为分析器应用程序提供运行时性能指标。由于这涉及由分析器自动应用的应用程序代码的更改，因此还意味着存在一定的性能影响和影响现有功能的风险。</p>
+<p>实际影响程度难以确定，但如果对CPU密集型部分进行检测，则可能会变得很重要。</p>
+<p>通常建议使用性能分析来优化特定算法，或者当你对测量调用计数感兴趣时。</p>
+<h4 id="sampling">Sampling</h4>
+<p>另一方面的Sampling通过定期从JVM检索线程转储来工作。在这种情况下，性能影响很小（并且由于使用固定频率检索线程转储，因此不变）并且不存在引入副作用的风险。这个过程不那么具有侵入性，并且可以在远程应用程序上非常可靠地执行（即它甚至可以应用于生产实例）。</p>
+<p>CPU采样的主要缺点是准确性 - 由于以固定间隔检索线程转储，因此存在丢失某些方法调用（特别是非常快的方法）的高风险。这意味着方法的调用计数非常难以实现，但总花费时间（和CPU时间）仍应提供一些相关度量。</p>
+<h3 id="何时使用cpu-sampling">何时使用CPU Sampling</h3>
+<p>除非你对非常精确的性能指标感兴趣（尽管受到增加的仪器成本的影响），否则您应该在大多数情况下使用采样。分析的主要优点是其准确性，但由于仪器增加了性能影响，因此大多数性能指标都会受到未知因素的影响。</p>
+<h3 id="如何运行cpu-sampling">如何运行CPU Sampling</h3>
+<h4 id="本地应用">本地应用</h4>
+<p>对于本地应用程序，从JDK二进制目录启动VisualVM，</p>
+<ol>
+<li>在要在左侧屏幕上监视的进程上选择（双击）。</li>
+<li>单击“Sampler”选项卡</li>
+<li>准备好执行测试时，选择“Sample”选项卡旁边的“CPU”按钮。</li>
+<li>测试完成后，按“停止”并按“快照”按钮。</li>
+</ol>
+<p>请记住，采集快照之前显示的数据可能非常准确，也可能不准确。您应该仅对快照进行分析。</p>
+<p>人们在执行此步骤时遇到的常见错误是获取采样屏幕的实际屏幕截图。虽然看起来很好，想的非常周到，事实上数据大多没有意义 - 因为大多数情况下，性能瓶颈会在调用层次结构的某个更深处，而不会从概述中看到。</p>
+<h4 id="远程应用">远程应用</h4>
+<p>对于远程应用程序，该过程非常相似，但它需要与要监视的Java进程建立JMX连接。</p>
+<ol>
+<li>在应用程序上启用JMX端口。这超出了本文的范围，但您可以查看官方Oracle文档以获取更多详细信息： 使用JMX技术进行监视和管理</li>
+<li>右键单击左侧屏幕中的“远程”选项卡。</li>
+<li>选择“添加远程主机”</li>
+<li>填写主机名。大多数情况下，这已足够，但根据您在远程进程上启用JMX的方式，您可能还需要选中“高级设置”选项卡。</li>
+<li>右键单击新添加的主机，然后选择“添加JMX连接”。</li>
+<li>填写连接详细信息（包括端口号）和显示名称。如果您使用多个进程部署应用程序，则应输入描述性显示名称。</li>
+<li>双击新添加的JMX连接。</li>
+<li>从这一点开始，步骤与“本地应用程序”中的步骤相同。</li>
+</ol>
+<h3 id="self-time-和-self-time-cpu之间的区别">“Self Time” 和 “Self Time (CPU)之间的区别</h3>
+<p>在测试过程中，VisualVM 展示了2个相关的指标，但它们之前有明显的差异：</p>
+<ul>
+<li>self time - 计算在该方法中花费的总时间，包括锁定或其他阻塞行为所花费的时间</li>
+<li>self time (cpu) - 计算在该方法中花费的总时间，不包括线程被阻止的时间</li>
+</ul>
+<p>现在，你要决定的内容：</p>
+<ul>
+<li>如果你想专注于优化多线程交互，那么你应该瞄准self time  值，包括线程被阻塞的时间</li>
+<li>如果你对整体性能感兴趣并且不太关心多线程交互，那么应该只关注self time （cpu）。</li>
+</ul>
+<p>但请注意你的测试结果，如果你有一个保持连接打开的线程，很可能你会看到一些非常大的self time。这是正常的，这不是issue。</p>
+<blockquote>
+<p>本文翻译自 http://greyfocus.com/2016/05/visualvm-sampling/</p>
+</blockquote>
+]]></content>
+    </entry>
+    <entry>
+        <title type="html"><![CDATA[dubbo反序列化引发的性能问题]]></title>
+        <id>https://netyjq.github.io/post/an-experience-of-solve-dubbo-deserialization-problem</id>
+        <link href="https://netyjq.github.io/post/an-experience-of-solve-dubbo-deserialization-problem">
+        </link>
+        <updated>2018-11-17T02:19:44.000Z</updated>
+        <summary type="html"><![CDATA[<p>完整的记录了一次Dubbo反序列化引发的性能问题经历，从问题排查到最终解决，涉及到性能测试，NIO，Dubbo动态调用，Hessian序列化/反序列化，Java反射等问题。</p>
+]]></summary>
+        <content type="html"><![CDATA[<p>完整的记录了一次Dubbo反序列化引发的性能问题经历，从问题排查到最终解决，涉及到性能测试，NIO，Dubbo动态调用，Hessian序列化/反序列化，Java反射等问题。</p>
+<!-- more -->
+<h3 id="背景">背景</h3>
+<p>在前置机server集群版本进行性能压测的时候，发现性能较差，并发200的情况下，QPS 只有100上下，并且有一定的错误率（超时）。</p>
+<figure data-type="image" tabindex="1"><img src="http://ww1.sinaimg.cn/large/c9025ee6ly1fxa1626s3zj20wr01zt9v.jpg" alt=""></figure>
+<h3 id="对问题源头进行分析">对问题源头进行分析</h3>
+<p>为确保整个调用链路源头没问题，首先对课程中心RPC接口进行压测，其硬件配置如下 ：</p>
+<pre><code>CPU
+型号名称：Intel(R) Xeon(R) CPU E5-2683 v3 @ 2.00GHz
+CPU(s):                2
+
+内存
+文件系统                 容量  已用  可用 已用% 挂载点
+/dev/mapper/centos-root   34G   24G  9.9G   71% /
+</code></pre>
+<p>压测结果</p>
+<figure data-type="image" tabindex="2"><img src="http://ww1.sinaimg.cn/large/c9025ee6ly1fxa16rsle9j20wn01ujrb.jpg" alt=""></figure>
+<p>CPU 负载情况</p>
+<figure data-type="image" tabindex="3"><img src="http://ww1.sinaimg.cn/large/c9025ee6ly1fxa17cj7aij20k603l0sq.jpg" alt=""></figure>
+<p>通过直接对课程中心的RPC服务接口进行压测，发现服务源头是OK的，TPS 达到508.5，RPC服务提供方CPU基本被榨干，理论上这台机器足够强悍，TPS还可以更高。前置机之前也测试过，netty的性能毋庸置疑，那么只有统一接入最有可能出现问题。</p>
+<h3 id="对应用自身进行分析">对应用自身进行分析</h3>
+<p>初步分析，统一接入有2个地方可能有性能问题，一个是数据库操作（请求流水表字段过长及表数据条数过多引发慢查询，但测试期间测试库已做清理），一个是RPC动态调用上，于是我把核心逻辑抽出来，去除数据库干扰进行性能测试，得到以下结果：</p>
+<figure data-type="image" tabindex="4"><img src="http://ww1.sinaimg.cn/large/c9025ee6ly1fxa1aw3rk6j20wq02l748.jpg" alt=""></figure>
+<figure data-type="image" tabindex="5"><img src="http://ww1.sinaimg.cn/large/c9025ee6ly1fxa1b6oyubj20kf03it8p.jpg" alt=""></figure>
+<p>根据结果可以看到 TPS 只有93，0.0.1%的错误率，看来和数据库并没有多大关系，而且课程中心的RPC服务CPU占用率极低，这进一步让我确认统一接入的问题出在RPC动态调用上。</p>
+<h3 id="找到问题">找到问题</h3>
+<p>在压测过程中发现有一段日志一直打印出来。一开始我以为是统一日志打印出来的，就没太去在意，最后看了源代码后发现这才是真正的问题所在啊！</p>
+<pre><code>[New I/O worker #1] com.alibaba.com.caucho.hessian.io.SerializerFactory.getDeserializer Hessian/Burlap: 'com.bozhong.coursecenter.common.util.ResultMessageBuilder$ResultMessage' is an unknown class in ParallelWebappClassLoader
+  context: ROOT
+  delegate: false
+----------&gt; Parent Classloader:
+java.net.URLClassLoader@3b7541a
+:
+java.lang.ClassNotFoundException: com.bozhong.coursecenter.common.util.ResultMessageBuilder$ResultMessage
+</code></pre>
+<p>顺着提示，找到了 <code>SerializerFactory</code> <code>getDeserializer</code> 这段代码日志打印出来的地方<br>
+<img src="http://ww1.sinaimg.cn/large/c9025ee6ly1fxatswnerbj20vl05r74o.jpg" alt=""></p>
+<p>告警日志打印出来是因为反射时候没有找到类抛出 <code>ClassNotFoundException</code>，因为 <code>Dubbo</code>是使用<code>Hession</code>进行反序列化的，而反序列化的时候会用到反射将二进制流数据转化为<code>Java Object</code>，如果反射成功，<code>Dubbo</code>会缓存在内存里，反之每次调用都会进行反射。</p>
+<figure data-type="image" tabindex="6"><img src="http://ww1.sinaimg.cn/large/c9025ee6ly1fxatthlm30j20o704st8x.jpg" alt=""></figure>
+<h3 id="对问题结论进行验证">对问题结论进行验证</h3>
+<p>至此问题已经排查到了，正是高并发下频繁的调用反射导致了 CPU 占用飙升并且主要耗费时间都花在了反射下。为了验证这个结论，再次进行性能测试并利用JVM性能分析工具对CPU时间片进行采样分析，得到下图结果：</p>
+<figure data-type="image" tabindex="7"><img src="http://ww1.sinaimg.cn/large/c9025ee6ly1fxattrvan7j21fo0l0k54.jpg" alt=""></figure>
+<p>可以看到<code>com.alibaba.com.caucho.hessian.io.SerializerFactory</code>  <code>getDeserializer</code>这个方法执行过程中 <code>Self Time (CPU)</code> 耗时排在第三位。</p>
+<p>接下来把对方提供的RPC服务jar包加入依赖，再次进行性能测试，得到以下结果：</p>
+<figure data-type="image" tabindex="8"><img src="http://ww1.sinaimg.cn/large/c9025ee6ly1fxatu51za1j20wm01xdfr.jpg" alt=""></figure>
+<p>TPS达到了438.6，接近直接调用的 TPS 508</p>
+<h3 id="深入探究问题">深入探究问题</h3>
+<p>问题总算是找到了，那么如何解决？</p>
+<p>回过头来看这个问题，发现业务是可以用的，只是在并发的情况下会出现性能问题，并引发dubbo超时错误，那么dubbo是如何保证可用的呢？</p>
+<p>找到 <code>SerializerFactory</code> <code>getDeserializer</code>  上一层调用的源码  <code>SerializerFactory</code> <code>readObject</code></p>
+<figure data-type="image" tabindex="9"><img src="http://ww1.sinaimg.cn/large/c9025ee6ly1fxatujsc34j20l90d2t9u.jpg" alt=""></figure>
+<p>通过翻阅源码发现，如果反射Java对象出现<code>ClassNotFoundException</code>时，<code>Dubbo</code>最终会反序列化成<code>HashMap</code>。</p>
+<h3 id="解决问题">解决问题</h3>
+<p>由于统一接入这个项目的特殊性，依赖所有客户端的jar包是不可取的，也违背了 “动态调用” 这个设计初衷，那么解决这个问题有2种方式</p>
+<ol>
+<li>业务方返回的数据转化成 <code>String</code>, <code>Integer</code>...等<code>Java</code>基本类型</li>
+<li>处理统一接入<code>Dubbo</code>反序列化方式，全部反序列化成<code>HashMap</code>接收</li>
+</ol>
+<p>以上2点各有利弊，对于第1种方式而言，代价无疑是巨大的，我个人倾向于第2种方式，对他人无侵入，改动工作量最小，效果最佳。</p>
+<p>以下是我的改造方式 通过修改源码，在 <code>SerializerFactory getDeserializer</code>  开头处加入一段判断逻辑</p>
+<figure data-type="image" tabindex="10"><img src="http://ww1.sinaimg.cn/large/c9025ee6ly1fxatv6b3kbj20nh0gmwfg.jpg" alt=""></figure>
+<p>接下来再次进行性能压测，得到如下结果</p>
+<figure data-type="image" tabindex="11"><img src="http://ww1.sinaimg.cn/large/c9025ee6ly1fxatvdt4rij20wi02bt8n.jpg" alt=""></figure>
+<p>TPS 516.5  0错误率。</p>
+<p>以上是统一接出性能问题的发现及解决过程。</p>
+<p>注：以上所有压测条件为本地启动demo程序提供http接口， 并发 200，<code>tomcat</code>使用默认配置 <code>maxThreads</code> 200，<code>accpectCount</code> 100， 本机机器<br>
+为 Win10  intel CORE i5 8G，压测工具为 Apache Jmeter，压测过程中java进程cpu占比15%左右， <code>Dubbo</code>服务提供方性能配置为文章开头已说明。</p>
+]]></content>
+    </entry>
+    <entry>
+        <title type="html"><![CDATA[Tomcat免路径访问项目启动两次问题]]></title>
+        <id>https://netyjq.github.io/post/three-ways-avoid-tomcat-deploy-war-started-twice</id>
+        <link href="https://netyjq.github.io/post/three-ways-avoid-tomcat-deploy-war-started-twice">
+        </link>
+        <updated>2018-08-25T02:17:48.000Z</updated>
+        <summary type="html"><![CDATA[<p>通常在tomcat中部署war包，如果不做任何配置，是需要加url中加入war包名称的，就像这样：</p>
+<p><a href="http://localhost:8080/appName/route">http://localhost:8080/appName/route</a></p>
+<p>其实这个appName是可以省略的，平时一般通过nginx进行代理，其实不通过nginx也可以做到，不妨来试试下面这三种方式。</p>
+]]></summary>
+        <content type="html"><![CDATA[<p>通常在tomcat中部署war包，如果不做任何配置，是需要加url中加入war包名称的，就像这样：</p>
+<p><a href="http://localhost:8080/appName/route">http://localhost:8080/appName/route</a></p>
+<p>其实这个appName是可以省略的，平时一般通过nginx进行代理，其实不通过nginx也可以做到，不妨来试试下面这三种方式。</p>
+<!-- more -->
+<h3 id="前言">前言</h3>
+<p>在tomcat种部署war包，如果想不带项目名访问应用，之前了解到的就是在<code>server.xml</code>Host节点下面增加一个Context，像这样</p>
+<pre><code class="language-xml">&lt;Context path=&quot;&quot; docBase=&quot;ExampleApp&quot;&gt;&lt;/Context&gt;
+</code></pre>
+<p>这样做确实能达到效果，但是你会发现，应用被莫名其妙的启动了2次，但是为什么会启动2次，Google搜了一些资料，找到了答案。</p>
+<p>默认情况下<code>tomcat</code>的<code>docBase</code>就是 <code>webapps</code>，只要在这个目录下面的项目都会被启动，如果在server.xml中加了Context节点，tomcat将再启动一次。相当于启动了 http://localhost:8080/ExampleApp/ 和 http://localhost:8080/</p>
+<p>下面介绍3种避免Tomcat启动2次的方式</p>
+<h3 id="1-将war包命名为rootwar">1. 将war包命名为ROOT.war</h3>
+<p>这种方式简单高效，不用修改任何配置。</p>
+<p>当然缺点也很明显，首先是可读性降低，无法通过名称辨别项目，当应用多的时候维护起来很费劲；另外就是每次部署都得改下项目名称,除非打包时就指定war包名称(可以通过maven&gt;build&gt;finalName指定)</p>
+<p>自己本地可以这样操作，公司服务器上不推荐这种方式。</p>
+<h3 id="2-配置serverxml">2. 配置server.xml</h3>
+<p>在server.xml种的Host节点配置一个Context，docBase属性就是webapps下你的项目名称，为了避免启动两次，Host节点需要设置2个属性：</p>
+<p><code>autoDeploy=&quot;false&quot; deployOnStartup=&quot;false&quot;</code></p>
+<p>最终效果像下面这样：</p>
+<pre><code class="language-xml">&lt;Host name=&quot;localhost&quot; appBase=&quot;webapps&quot; unpackWARs=&quot;true&quot;
+  autoDeploy=&quot;false&quot; deployOnStartup=&quot;false&quot;&gt;
+    &lt;Context path=&quot;&quot; docBase=&quot;ExampleApp&quot;&gt;&lt;/Context&gt;
+ 
+    &lt;!-- Further settings for localhost --&gt;
+&lt;/Host&gt;
+</code></pre>
+<p>这种方式是一劳永逸的，墙裂推荐！（但如果在同一个tomcat下部署多个应用就很蛋疼了，不过几乎没人这么干，怎么？你打算这么干？）</p>
+<h3 id="3-在特定的xml文件中制定上下文路径">3. 在特定的xml文件中制定上下文路径</h3>
+<p>在 <code>$CATALINA_HOME\conf\Catalina\localhost</code> 路径下新建一个 <code>ROOT.xml</code>,<br>
+内容如下 ：<br>
+<code>&lt;Context docBase=&quot;../deploy/ExampleApp.war&quot;/&gt;</code></p>
+<p>这里有2点需要注意：</p>
+<p>首先，我们不必像前面的选项那样显式地指定路径——Tomcat从ROOT.xml的名称派生出路径。</p>
+<p>其次，由于我们在不同于服务器的文件中定义上下文，我们的<code>docBase</code>必须在<code>$CATALINA_HOME\webApps</code>之外。</p>
+<p>这种方式操作起来比较复杂，不是太推荐使用。</p>
+<p>参考资料<br>
+<a href="https://www.baeldung.com/tomcat-root-application">Deploy Application at Tomcat Root</a></p>
+]]></content>
+    </entry>
+    <entry>
+        <title type="html"><![CDATA[统一网关Zuul]]></title>
+        <id>https://netyjq.github.io/post/introduction-of-zuul-gateway</id>
+        <link href="https://netyjq.github.io/post/introduction-of-zuul-gateway">
+        </link>
+        <updated>2018-06-13T11:06:22.000Z</updated>
+        <summary type="html"><![CDATA[<p>Zuul是一种提供动态路由，监控，弹性，安全性等的网关服务。Zuul 提供了四种过滤器的 API，分别为前置（Pre）、后置（Post）、路由（Route）和错误（Error）四种处理方式。</p>
+]]></summary>
+        <content type="html"><![CDATA[<p>Zuul是一种提供动态路由，监控，弹性，安全性等的网关服务。Zuul 提供了四种过滤器的 API，分别为前置（Pre）、后置（Post）、路由（Route）和错误（Error）四种处理方式。</p>
+<!-- more -->
+<h2 id="zuul是什么">Zuul是什么</h2>
+<p>Zuul is a gateway service that provides dynamic routing, monitoring, resiliency, security, and more.</p>
+<p>Zuul是一种提供动态路由，监控，弹性，安全性等的网关服务。</p>
+<figure data-type="image" tabindex="1"><img src="https://camo.githubusercontent.com/4eb7754152028cdebd5c09d1c6f5acc7683f0094/687474703a2f2f6e6574666c69782e6769746875622e696f2f7a75756c2f696d616765732f7a75756c2d726571756573742d6c6966656379636c652e706e67" alt="image"></figure>
+<p>Zuul 提供了四种过滤器的 API，分别为前置（Pre）、后置（Post）、路由（Route）和错误（Error）四种处理方式。</p>
+<p>一个请求会先按顺序通过所有的前置过滤器，之后在路由过滤器中转发给后端应用，得到响应后又会通过所有的后置过滤器，最后响应给客户端。在整个流程中如果发生了异常则会跳转到错误过滤器中。</p>
+<h2 id="应用场景">应用场景</h2>
+<h3 id="鉴权">鉴权</h3>
+<p>基于Zuul的前置过滤器，可以做统一的认证鉴权。认证方式一般有3种，</p>
+<ul>
+<li>Basic Authentication</li>
+</ul>
+<p>这种方式是直接将用户名和密码放到Header中，使用最简单但是最不安全。</p>
+<ul>
+<li>TOKEN认证</li>
+</ul>
+<p>这种方式也是再HTTP头中，使用Authorization: Bearer <token>，使用最广泛的TOKEN是JWT，通过签名过的TOKEN</p>
+<ul>
+<li>OAuth2.0</li>
+</ul>
+<p>这种方式安全等级最高，但是也是最复杂的。如果不是大型API平台或者需要给第三方APP使用的，没必要整这么复杂。</p>
+<p>这里建议使用 Json web token(JWT) 来实现统一鉴权。</p>
+<p>JWT 大致工作流程如下：</p>
+<figure data-type="image" tabindex="2"><img src="https://raw.githubusercontent.com/netyjq/images/master/jwt20.png" alt="image"></figure>
+<p>关于JWT的介绍可以参考官网 <a href="https://jwt.io/">https://jwt.io/</a></p>
+<h3 id="动态路由">动态路由</h3>
+<p>通过服务路由的功能，我们在对外提供服务的时候，只需要通过暴露Zuul中配置的调用地址就可以让调用方统一的来访问我们的服务，而不需要了解具体提供服务的主机信息了。在Zuul中提供了两种映射方式：</p>
+<ul>
+<li>通过url直接映射，我们可以如下配置：</li>
+</ul>
+<pre><code class="language-xml"># routes to url
+zuul.routes.myservice.path=/myservice/**
+zuul.routes.myservice.url=http://localhost:2222/
+</code></pre>
+<p>该配置定义了，所有请求到Zuul中规则为：/myservice/** 的访问都映射到 <a href="http://localhost:2222/">http://localhost:2222/</a> 上，也就是说当我们访问Zuul接口地址 <a href="http://localhost:8080/myservice/update">http://localhost:8080/myservice/update</a>的时候，Zuul会将该请求路由到：<a href="http://localhost:2222/update">http://localhost:2222/update</a>上。</p>
+<ul>
+<li>eureka服务注册与发现</li>
+</ul>
+<p>通过url映射的方式每加一个服务都需要手动配置一次，显然是不可行的。这里需要借助 spring cloud eureka, 当服务注册到eureka server时，eureka会维护服务名与服务实例地址的关系，所以只需要将Zuul注册到eureka server上去发现其他服务，我们就可以实现对serviceId的映射。</p>
+<p>推荐使用第二种方式, 当访问 <code>Zuul地址:Zuul端口号/A服务serviceId/**</code> 时， Zuul会转发到</p>
+<p><code>A服务地址:A服务端口号/**</code></p>
+<h3 id="限流">限流</h3>
+<p>微服务开发中有时需要对API做限流保护，防止恶意访问等。</p>
+<p>微服务网关是每个请求的必经入口，非常适合做一些API限流、认证之类的操作，这里有一个基于zuul微服务网关的API限流库：<a href="https://github.com/marcosbarbero/spring-cloud-zuul-ratelimit">https://github.com/marcosbarbero/spring-cloud-zuul-ratelimit</a></p>
+<pre><code class="language-xml">&lt;dependency&gt;
+    &lt;groupId&gt;com.marcosbarbero.cloud&lt;/groupId&gt;
+    &lt;artifactId&gt;spring-cloud-zuul-ratelimit&lt;/artifactId&gt;
+    &lt;version&gt;LATEST&lt;/version&gt;
+&lt;/dependency&gt;
+</code></pre>
+<p>支持 URL(请求路径)、IP(客户端IP地址)、USER(授权用户) 三种类型并且可以混合配置使用。 Zuul RateLimit 需要对限流配置做存储，支持内存，Redis，DB等方式，默认使用内存。</p>
+<p>下面的配置为限制客户端60s内请求不能超过10次，否则就抛出异常。一分钟后又可以正常请求。某个IP的客户端被限流并不影响其他客户端，即API网关对每个客户端限流是相互独立的</p>
+<pre><code>zuul:
+  ratelimit:
+    enabled: true
+    behind-proxy: true
+    policy-list:
+      user-service:
+        - limit: 10
+          refresh-interval: 60
+          type:
+            - user
+            - origin
+            - url
+</code></pre>
+<h3 id="服务熔断与降级">服务熔断与降级</h3>
+<p>首先要理解<strong>服务熔断</strong>与<strong>服务降级</strong>的区别是什么？</p>
+<ul>
+<li>触发原因不太一样，服务熔断一般是某个服务（下游服务）故障引起，而服务降级一般是从整体负荷考虑；</li>
+<li>管理目标的层次不太一样，熔断其实是一个框架级的处理，每个微服务都需要（无层级之分），而降级一般需要对业务有层级之分（比如降级一般是从最外围服务开始）</li>
+</ul>
+<p>Hystrix是Netflix开源的一款容错系统，能帮助使用者码出具备强大的容错能力和鲁棒性的程序。spring-cloud-netflix集成并封装了Hystrix组件，只需要实现 <code>ZuulFallbackProvider</code> 接口，当路由的服务发生故障时，执行特定的逻辑。</p>
+<pre><code class="language-java">@Component
+public class MyServiceFallbackProvider implements ZuulFallbackProvider {
+
+    /**
+     * 服务id，如果需要所有调用都支持回退，则return &quot;*&quot;或return null
+     * @return
+     */
+    @Override
+    public String getRoute() {
+        return &quot;myservice&quot;;
+    }
+
+    @Override
+    public ClientHttpResponse fallbackResponse() {
+        return new ClientHttpResponse() {
+            @Override
+            public HttpStatus getStatusCode() throws IOException {
+                return HttpStatus.OK;
+            }
+
+            /**
+             * 网关向api服务请求是失败了，但是消费者客户端向网关发起的请求是OK的，
+             * 不应该把api的404,500等问题抛给客户端
+             * 网关和api服务集群对于客户端来说是黑盒子
+             */
+            @Override
+            public int getRawStatusCode() throws IOException {
+                return this.getStatusCode().value();
+            }
+
+            @Override
+            public String getStatusText() throws IOException {
+                return this.getStatusCode().getReasonPhrase();
+            }
+
+            @Override
+            public void close() {
+
+            }
+
+            /**
+             * 返回特定的内容给客户端
+             * @return
+             * @throws IOException
+             */
+            @Override
+            public InputStream getBody() throws IOException {
+                return new ByteArrayInputStream(&quot;myservice服务不可用&quot;.getBytes());
+            }
+
+            @Override
+            public HttpHeaders getHeaders() {
+                HttpHeaders headers = new HttpHeaders();
+                MediaType mt = new MediaType(&quot;application&quot;, &quot;json&quot;, Charset.forName(&quot;UTF-8&quot;));
+                headers.setContentType(mt);
+                return headers;
+            }
+        };
+    }
+}
+</code></pre>
+<h3 id="数据统计">数据统计</h3>
+<p>Zuul 可以统一收集所有应用请求的记录，并写入日志文件或是发到监控系统，相比 Nginx 的 access log，好处主要也是二次开发比较方便，比如可以关注一些业务相关的 HTTP 头，或是将请求参数和返回值都保存为日志打入消息队列中，便于线上故障调试。</p>
+<h3 id="错误过滤器">错误过滤器</h3>
+<p>错误过滤器的主要用法就像是 Jersey 中的<br>
+ExceptionMapper 或是 Spring MVC 中的 @ExceptionHandler 一样，在处理流程中认为有问题时，直接抛出统一的异常，错误过滤器捕获到这个异常后，就可以统一的进行返回值的封装，并直接结束该请求。</p>
+<h2 id="zuul稳定性">Zuul稳定性</h2>
+<p>在微服务的模式下，应用之间的联系变得没那么强烈，理想中任何一个应用超过负载或是挂掉了，都不应该去影响到其他应用。但是在 Gateway 这个层面，有没有可能出现一个应用负载过重，导致将整个 Gateway 都压垮了，已致所有应用的流量入口都被切断？</p>
+<p>在 Zuul 中，每一个后端应用都称为一个 Route，为了避免一个 Route 抢占了太多资源影响到其他 Route 的情况出现，Zuul 使用 Hystrix 对每一个 Route 都做了隔离和限流。</p>
+<p>Hystrix的隔离策略有2种，</p>
+<ul>
+<li>基于信号量</li>
+<li>基于线程</li>
+</ul>
+<p>当隔离策略为线程时，每一个 Route 的请求都会在一个固定大小且独立的线程池中执行，这样即使其中一个 Route 出现了问题，也只会是某一个线程池发生了阻塞，其他 Route 不会受到影响。</p>
+<p>当隔离策略为信号量时，Route请求的信号量高于指定值时Zuul网关将拒绝服务返回500。</p>
+]]></content>
+    </entry>
+    <entry>
+        <title type="html"><![CDATA[SpringBoot从入门到运用]]></title>
+        <id>https://netyjq.github.io/post/springboot-simple-guide-demo</id>
+        <link href="https://netyjq.github.io/post/springboot-simple-guide-demo">
+        </link>
+        <updated>2018-05-02T14:05:52.000Z</updated>
+        <summary type="html"><![CDATA[<p>Spring Boot可以轻松创建独立的、基于产品级别Spring的应用程序，基于“约定大于配置”的理念，SpringBoot整合了Spring平台和第三方的库，开箱即用，大部分情况下，开发人员只需要少量的配置就可以直接运行。Spring Boot的目的是提供一组工具，以便快速构建容易配置的 Spring 应用程序。</p>
+]]></summary>
+        <content type="html"><![CDATA[<p>Spring Boot可以轻松创建独立的、基于产品级别Spring的应用程序，基于“约定大于配置”的理念，SpringBoot整合了Spring平台和第三方的库，开箱即用，大部分情况下，开发人员只需要少量的配置就可以直接运行。Spring Boot的目的是提供一组工具，以便快速构建容易配置的 Spring 应用程序。</p>
+<!-- more -->
+<blockquote>
+<p>Spring Boot makes it easy to create stand-alone, production-grade Spring based Applications that you can &quot;just run&quot;. We take an opinionated view of the Spring platform and third-party libraries so you can get started with minimum fuss. Most Spring Boot applications need very little Spring configuration.</p>
+</blockquote>
+<p>来自<a href="https://projects.spring.io/spring-boot/">SpringBoot官网</a>的简介</p>
+<h3 id="特性">特性</h3>
+<ul>
+<li>创建独立的Spring应用程序</li>
+<li>直接嵌入Tomcat，Jetty或Undertow（无需部署WAR文件）</li>
+<li>提供自己的'入门'POM来简化你的Maven配置</li>
+<li>尽可能自动配置Spring</li>
+<li>提供产品级的特性，如度量、健康检查和外部化配置。</li>
+<li>绝对没有代码生成，也不需要XML配置。</li>
+</ul>
+<h3 id="对比">对比</h3>
+<p>传统情况下使用Spring MVC 开发一个 &quot;Hello World&quot; 应用，你应该做这些：</p>
+<ul>
+<li>配置pom 添加Spring很多依赖</li>
+<li>配置Spring的xml文件，扫描组件，开启注解</li>
+<li>配置web.xml，声明DispatcherServlet</li>
+<li>...</li>
+<li>业务代码</li>
+<li>tomcat 部署调试</li>
+</ul>
+<p>如果使用SpringBoot，你只需要做以下几个步骤，</p>
+<ul>
+<li>pom引入SpringBoot Starter</li>
+<li>业务代码</li>
+<li>启动调试</li>
+</ul>
+<p>SpringBoot 本质上就是Spring，它帮你做了Spring相关配置的整合，没有它，你自己也可以做。</p>
+<h3 id="快速入门-hello-world">快速入门 Hello World</h3>
+<p>按照官网的介绍开始编码运行第一个SpringBoot程序</p>
+<h3 id="整合mybatis">整合mybatis</h3>
+<h4 id="1-加入pom依赖">1. 加入pom依赖</h4>
+<pre><code class="language-xml">&lt;!-- mybatis support starter --&gt;
+&lt;dependency&gt;
+    &lt;groupId&gt;org.mybatis.spring.boot&lt;/groupId&gt;
+    &lt;artifactId&gt;mybatis-spring-boot-starter&lt;/artifactId&gt;
+    &lt;version&gt;1.3.0&lt;/version&gt;
+&lt;/dependency&gt;
+
+&lt;!-- mysql --&gt;
+&lt;dependency&gt;
+    &lt;groupId&gt;mysql&lt;/groupId&gt;
+    &lt;artifactId&gt;mysql-connector-java&lt;/artifactId&gt;
+    &lt;scope&gt;runtime&lt;/scope&gt;
+&lt;/dependency&gt;
+
+&lt;!-- alibaba druid --&gt;
+ &lt;dependency&gt;
+    &lt;groupId&gt;com.alibaba&lt;/groupId&gt;
+    &lt;artifactId&gt;druid&lt;/artifactId&gt;
+    &lt;version&gt;1.0.2&lt;/version&gt;
+&lt;/dependency&gt;
+
+</code></pre>
+<h4 id="2-配置别名以及sqlmap路径">2. 配置别名以及sqlmap路径</h4>
+<pre><code>mybatis.typeAliasesPackage=com.example.model
+mybatis.mapperLocations=classpath:mapper/*.xml
+</code></pre>
+<h4 id="3-在启动类上设置mapper路径">3. 在启动类上设置Mapper路径</h4>
+<pre><code class="language-java">@SpringBootApplication
+@ComponentScan(basePackages = &quot;com.bozhong&quot;)
+@MapperScan(&quot;com.bozhong.mapper&quot;)
+public class ApplicationStarter {
+    public static void main(String[] args) {
+        SpringApplication.run(ApplicationStarter.class, args);
+    }
+}
+</code></pre>
+<h4 id="4-业务代码">4. 业务代码</h4>
+<pre><code>@Mapper
+public interface IServiceIfoMapper {
+    int insert(ServiceInfo serviceInfo);
+
+    findByParams(@Param(&quot;serviceInfoName&quot;) String name);
+}
+</code></pre>
+<h3 id="整合dubbo">整合dubbo</h3>
+<h4 id="1-pom-依赖">1. pom 依赖</h4>
+<pre><code class="language-xml">&lt;dependency&gt;
+    &lt;groupId&gt;com.alibaba.boot&lt;/groupId&gt;
+    &lt;artifactId&gt;dubbo-spring-boot-starter&lt;/artifactId&gt;
+    &lt;version&gt;0.1.0&lt;/version&gt;
+&lt;/dependency&gt;
+</code></pre>
+<h4 id="2-provider">2. provider</h4>
+<p><code>interface</code></p>
+<pre><code class="language-java">public interface DemoService {
+
+    String sayHello(String name);
+
+}
+</code></pre>
+<p><code>implemention</code></p>
+<pre><code>@Service(
+        version = &quot;1.0.0&quot;,
+        application = &quot;${dubbo.application.id}&quot;,
+        protocol = &quot;${dubbo.protocol.id}&quot;,
+        registry = &quot;${dubbo.registry.id}&quot;
+)
+public class DefaultDemoService implements DemoService {
+
+    public String sayHello(String name) {
+        return &quot;Hello, &quot; + name + &quot; (from Spring Boot)&quot;;
+    }
+
+}
+</code></pre>
+<p>properties</p>
+<pre><code># Spring boot application
+spring.application.name = dubbo-provider-demo
+server.port = 9090
+management.port = 9091
+
+# Base packages to scan Dubbo Components (e.g., @Service, @Reference)
+dubbo.scan.basePackages  = com.alibaba.boot.dubbo.demo.provider.service
+
+# Dubbo Config properties
+## ApplicationConfig Bean
+dubbo.application.id = dubbo-provider-demo
+dubbo.application.name = dubbo-provider-demo
+
+## ProtocolConfig Bean
+dubbo.protocol.id = dubbo
+dubbo.protocol.name = dubbo
+dubbo.protocol.port = 12345
+
+## RegistryConfig Bean
+dubbo.registry.id = my-registry
+dubbo.registry.address = N/A
+
+</code></pre>
+<h4 id="3-使用">3. 使用</h4>
+<p>业务代码</p>
+<pre><code class="language-java">@RestController
+public class DemoConsumerController {
+
+    @Reference(version = &quot;1.0.0&quot;,
+            application = &quot;${dubbo.application.id}&quot;,
+            url = &quot;dubbo://localhost:12345&quot;)
+    private DemoService demoService;
+
+    @RequestMapping(&quot;/sayHello&quot;)
+    public String sayHello(@RequestParam String name) {
+        return demoService.sayHello(name);
+    }
+
+}
+</code></pre>
+<p>启动类配置</p>
+<pre><code class="language-java">@SpringBootApplication(scanBasePackages = &quot;com.alibaba.boot.dubbo.demo.consumer.controller&quot;)
+public class DubboConsumerDemo {
+
+    public static void main(String[] args) {
+
+        SpringApplication.run(DubboConsumerDemo.class,args);
+
+    }
+
+}
+</code></pre>
+<p><code>application.properties</code></p>
+<pre><code># Spring boot application
+spring.application.name = dubbo-consumer-demo
+server.port = 8080
+management.port = 8081
+
+
+# Dubbo Config properties
+## ApplicationConfig Bean
+dubbo.application.id = dubbo-consumer-demo
+dubbo.application.name = dubbo-consumer-demo
+
+## ProtocolConfig Bean
+dubbo.protocol.id = dubbo
+dubbo.protocol.name = dubbo
+dubbo.protocol.port = 12345
+</code></pre>
+<h3 id="整合logback">整合logback</h3>
+<p>SpringBoot默认集成了logback，对应的会读取 resources下的logback-spring.xml，如果你要指定路径，需要在application.properties中指定</p>
+<pre><code class="language-xml">logging.config=classpath:config/logging-config.xml
+</code></pre>
+<p>日志配置文件</p>
+<pre><code>&lt;?xml version=&quot;1.0&quot; encoding=&quot;UTF-8&quot;?&gt;
+&lt;configuration scan=&quot;true&quot; scanPeriod=&quot;60 seconds&quot; debug=&quot;false&quot;&gt;
+
+    &lt;contextName&gt;logback&lt;/contextName&gt;
+
+    &lt;!-- appender用来格式化日志输出节点，有俩个属性name和class，class用来指定哪种输出策略，常用就是控制台输出策略和文件输出策略 --&gt;
+
+    &lt;!--　错误日志输出配置　--&gt;
+    &lt;appender name=&quot;error&quot; class=&quot;ch.qos.logback.core.rolling.RollingFileAppender&quot;&gt;
+        &lt;file&gt;${LOG_PATH}/logs/error/error.log&lt;/file&gt;
+        &lt;rollingPolicy class=&quot;ch.qos.logback.core.rolling.TimeBasedRollingPolicy&quot;&gt;
+            &lt;fileNamePattern&gt;logs/error/error.log.%d{yyyy-MM-dd-HH}&lt;/fileNamePattern&gt;
+            &lt;maxHistory&gt;30&lt;/maxHistory&gt;
+        &lt;/rollingPolicy&gt;
+        &lt;filter class=&quot;ch.qos.logback.classic.filter.LevelFilter&quot;&gt;
+            &lt;level&gt;ERROR&lt;/level&gt;
+            &lt;onMatch&gt;ACCEPT&lt;/onMatch&gt;
+            &lt;onMismatch&gt;DENY&lt;/onMismatch&gt;
+        &lt;/filter&gt;
+        &lt;encoder&gt;
+            &lt;pattern&gt;%d{HH:mm:ss.SSS} %contextName [%thread] %-5level %logger{36} - %msg%n&lt;/pattern&gt;
+        &lt;/encoder&gt;
+    &lt;/appender&gt;
+
+    &lt;!-- info日志输出配置 --&gt;
+    &lt;appender name=&quot;info&quot; class=&quot;ch.qos.logback.core.rolling.RollingFileAppender&quot;&gt;
+        &lt;file&gt;${LOG_PATH}/logs/info/info.log&lt;/file&gt;
+        &lt;rollingPolicy class=&quot;ch.qos.logback.core.rolling.TimeBasedRollingPolicy&quot;&gt;
+            &lt;fileNamePattern&gt;logs/info/info.log.%d{yyyy-MM-dd-HH}&lt;/fileNamePattern&gt;
+            &lt;maxHistory&gt;30&lt;/maxHistory&gt;
+        &lt;/rollingPolicy&gt;
+        &lt;filter class=&quot;ch.qos.logback.classic.filter.LevelFilter&quot;&gt;
+            &lt;level&gt;INFO&lt;/level&gt;
+            &lt;onMatch&gt;ACCEPT&lt;/onMatch&gt;
+            &lt;onMismatch&gt;DENY&lt;/onMismatch&gt;
+        &lt;/filter&gt;
+        &lt;encoder&gt;
+            &lt;pattern&gt;%d{HH:mm:ss.SSS} %contextName [%thread] %-5level %logger{36} - %msg%n&lt;/pattern&gt;
+        &lt;/encoder&gt;
+    &lt;/appender&gt;
+
+    &lt;!-- 控制台日志输出 --&gt;
+    &lt;appender name=&quot;console&quot; class=&quot;ch.qos.logback.core.ConsoleAppender&quot;&gt;
+        &lt;encoder&gt;
+            &lt;pattern&gt;%d{HH:mm:ss.SSS} %contextName [%thread] %-5level %logger{36} - %msg%n&lt;/pattern&gt;
+        &lt;/encoder&gt;
+    &lt;/appender&gt;
+
+    &lt;!-- 配置sql日志输出 --&gt;
+    &lt;logger name=&quot;com.example.mapper&quot; level=&quot;debug&quot; additivity=&quot;true&quot;&gt;
+        &lt;appender-ref ref=&quot;info&quot;/&gt;
+    &lt;/logger&gt;
+
+    &lt;!-- profile支持 --&gt;
+    &lt;springProfile name=&quot;dev&quot;&gt;
+        &lt;root level=&quot;info&quot;&gt;
+            &lt;appender-ref ref=&quot;console&quot;/&gt;
+            &lt;appender-ref ref=&quot;info&quot; /&gt;
+            &lt;appender-ref ref=&quot;error&quot; /&gt;
+        &lt;/root&gt;
+    &lt;/springProfile&gt;
+
+    &lt;springProfile name=&quot;test&quot;&gt;
+        &lt;root level=&quot;info&quot;&gt;
+            &lt;appender-ref ref=&quot;info&quot; /&gt;
+            &lt;appender-ref ref=&quot;error&quot; /&gt;
+        &lt;/root&gt;
+    &lt;/springProfile&gt;
+
+    &lt;springProfile name=&quot;prod&quot;&gt;
+        &lt;root level=&quot;info&quot;&gt;
+            &lt;appender-ref ref=&quot;info&quot; /&gt;
+            &lt;appender-ref ref=&quot;error&quot; /&gt;
+        &lt;/root&gt;
+    &lt;/springProfile&gt;
+
+
+&lt;/configuration&gt;
+</code></pre>
+<h3 id="springboot运行部署">SpringBoot运行部署</h3>
+<h4 id="可执行jar">可执行jar</h4>
+<p>SpringBoot支持jar包的部署项目，运行main方法或者 通过 <code>java -jar xx.jar</code> 命令启动项目。</p>
+<p>SpringBoot官网对<a href="https://docs.spring.io/spring-boot/docs/current-SNAPSHOT/reference/htmlsingle/#executable-jar">Executable Jar</a>这部分的介绍</p>
+<blockquote>
+<p>Java没有提供任何标准方式，用于加载内嵌jar文件（即jar文件中还包含jar文件），这对分发自包含应用来说是个问题。为了解决该问题，很多开发者采用&quot;共享的&quot;jars。共享的jar只是简单地将所有jars的类打包进一个单独的存档，这种方式存在的问题是，很难区分应用程序中使用了哪些库。在多个jars中如果存在相同的文件名（但内容不一样）也会是一个问题。Spring Boot采取一个不同的方式，允许你真正的直接内嵌jars。</p>
+</blockquote>
+<p>为了创建可执行的jar，我们需要将spring-boot-maven-plugin添加到pom.xml中，在dependencies节点后面插入以下内容：</p>
+<pre><code>&lt;build&gt;
+    &lt;plugins&gt;
+        &lt;plugin&gt;
+            &lt;groupId&gt;org.springframework.boot&lt;/groupId&gt;
+            &lt;artifactId&gt;spring-boot-maven-plugin&lt;/artifactId&gt;
+        &lt;/plugin&gt;
+    &lt;/plugins&gt;
+&lt;/build&gt;
+</code></pre>
+<p>如果不使用parent POM，需要重新打包 repackage</p>
+<pre><code>&lt;build&gt;
+    &lt;plugins&gt;
+        &lt;plugin&gt;
+            &lt;groupId&gt;org.springframework.boot&lt;/groupId&gt;
+            &lt;artifactId&gt;spring-boot-maven-plugin&lt;/artifactId&gt;
+            &lt;executions&gt;
+                &lt;execution&gt;
+                  &lt;goals&gt;
+                    &lt;goal&gt;repackage&lt;/goal&gt;
+                  &lt;/goals&gt;
+                &lt;/execution&gt;
+            &lt;/executions&gt;
+        &lt;/plugin&gt;
+    &lt;/plugins&gt;
+&lt;/build&gt;
+</code></pre>
+<h4 id="war">war</h4>
+<p>如果打成war包运行的话，则只需要排除SpringBoot内嵌的依赖。</p>
+<pre><code>&lt;dependency&gt;
+    &lt;groupId&gt;org.springframework.boot&lt;/groupId&gt;
+    &lt;artifactId&gt;spring-boot-starter-tomcat&lt;/artifactId&gt;
+    &lt;scope&gt;provided&lt;/scope&gt;
+&lt;/dependency&gt;
+</code></pre>
+<h4 id="jarwar根据环境切换">jar/war根据环境切换</h4>
+<p>本地我们更习惯 java -jar 或者右键启动，但是我们发布到发布系统的时候，是一个外部的tomcat容器，如何同时兼容本地和发布系统？</p>
+<p>这里就需要运用maven的 profile机制了，可以把pom修改为下面的形式：</p>
+<pre><code>&lt;packaging&gt;${packaging.type}&lt;/packaging&gt;
+
+...
+&lt;profiles&gt;
+    &lt;profile&gt;
+        &lt;id&gt;dev&lt;/id&gt;
+        &lt;properties&gt;
+            &lt;activatedProperties&gt;dev&lt;/activatedProperties&gt;
+            &lt;packaging.type&gt;jar&lt;/packaging.type&gt;
+        &lt;/properties&gt;
+        &lt;activation&gt;
+            &lt;activeByDefault&gt;true&lt;/activeByDefault&gt;
+        &lt;/activation&gt;
+    &lt;/profile&gt;
+
+    profile&gt;
+        &lt;id&gt;prod&lt;/id&gt;
+        &lt;properties&gt;
+            &lt;activatedProperties&gt;prod&lt;/activatedProperties&gt;
+            &lt;packaging.type&gt;war&lt;/packaging.type&gt;
+        &lt;/properties&gt;
+        &lt;dependencies&gt;
+            &lt;!-- 以war运行时需要排除嵌入式的tomcat --&gt;
+            &lt;dependency&gt;
+                &lt;groupId&gt;org.springframework.boot&lt;/groupId&gt;
+                &lt;artifactId&gt;spring-boot-starter-tomcat&lt;/artifactId&gt;
+                &lt;scope&gt;provided&lt;/scope&gt;
+            &lt;/dependency&gt;
+        &lt;/dependencies&gt;
+    &lt;/profile&gt;
+&lt;profiles&gt;
+</code></pre>
+<h3 id="小结">小结</h3>
+<p>以上介绍了SpringBoot的特性及常用框架集成。SpringBoot采用“习惯优于配置”的理念，为广大Java开发者提供了一组开箱即用的工具，大大简化了Java web程序的构建和配置，可广泛应用于生产环境。</p>
+]]></content>
+    </entry>
+</feed>

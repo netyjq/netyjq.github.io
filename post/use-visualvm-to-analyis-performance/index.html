@@ -1,0 +1,266 @@
+<html>
+  <head>
+    <meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>使用VisualVM进行性能分析 | yjq.wiki</title>
+<meta name="description" content="it's never too old to learn" />
+<link rel="shortcut icon" href="https://netyjq.github.io/favicon.ico?v=1575944462433">
+<link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.2/css/all.css" integrity="sha384-fnmOCqbTlWIlj8LyTjo7mOUStjsKC4pOpQbqyi7RrhN7udi9RwhKkMHpvLbHG9Sr" crossorigin="anonymous">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.10.0/katex.min.css">
+<link rel="stylesheet" href="https://netyjq.github.io/styles/main.css">
+
+<script src="https://cdn.bootcss.com/highlight.js/9.12.0/highlight.min.js"></script>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Droid+Serif:400,700">
+
+
+
+  </head>
+  <body>
+    <div class="main">
+      <div class="main-content">
+        <div class="site-header">
+  <a href="https://netyjq.github.io">
+  <img class="avatar" src="https://netyjq.github.io/images/avatar.png?v=1575944462433" alt="">
+  </a>
+  <h1 class="site-title">
+    yjq.wiki
+  </h1>
+  <p class="site-description">
+    it's never too old to learn
+  </p>
+  <div class="menu-container">
+    
+      
+        <a href="/" class="menu">
+          首页
+        </a>
+      
+    
+      
+        <a href="/archives" class="menu">
+          归档
+        </a>
+      
+    
+      
+        <a href="/tags" class="menu">
+          标签
+        </a>
+      
+    
+      
+        <a href="/post/about" class="menu">
+          关于
+        </a>
+      
+    
+  </div>
+  <div class="social-container">
+    
+      
+    
+      
+    
+      
+    
+      
+    
+      
+    
+  </div>
+</div>
+
+        <div class="post-detail">
+          <article class="post">
+            <h2 class="post-title">
+              使用VisualVM进行性能分析
+            </h2>
+            <div class="post-info">
+              <span>
+                2018-11-19
+              </span>
+              <span>
+                5 min read
+              </span>
+              
+                <a href="https://netyjq.github.io/tag/u70KtQZ1Js" class="post-tag">
+                  # VisualVM
+                </a>
+              
+            </div>
+            
+            <div class="post-content-wrapper">
+              <div class="post-content">
+                <p>VisualVM是一个集成了命令行JDK工具和轻量级概要分析功能的可视化工具。专为开发和线上运行使用而设计。本文翻译自国外大神greyfocus的博客文章，重点对VisualVM的Sampling(采样)和Profiling(分析)模块有详细的介绍。</p>
+<!-- more -->
+<h3 id="sampling-vs-profiling">Sampling vs Profiling</h3>
+<p>首先，让我们理解Sampling(采样)和Profiling(分析)之间的区别，这是一个关键的先决条件。</p>
+<h4 id="profiling">Profiling</h4>
+<p>Profiling涉及检测整个应用程序代码或仅检测某些类，以便为分析器应用程序提供运行时性能指标。由于这涉及由分析器自动应用的应用程序代码的更改，因此还意味着存在一定的性能影响和影响现有功能的风险。</p>
+<p>实际影响程度难以确定，但如果对CPU密集型部分进行检测，则可能会变得很重要。</p>
+<p>通常建议使用性能分析来优化特定算法，或者当你对测量调用计数感兴趣时。</p>
+<h4 id="sampling">Sampling</h4>
+<p>另一方面的Sampling通过定期从JVM检索线程转储来工作。在这种情况下，性能影响很小（并且由于使用固定频率检索线程转储，因此不变）并且不存在引入副作用的风险。这个过程不那么具有侵入性，并且可以在远程应用程序上非常可靠地执行（即它甚至可以应用于生产实例）。</p>
+<p>CPU采样的主要缺点是准确性 - 由于以固定间隔检索线程转储，因此存在丢失某些方法调用（特别是非常快的方法）的高风险。这意味着方法的调用计数非常难以实现，但总花费时间（和CPU时间）仍应提供一些相关度量。</p>
+<h3 id="何时使用cpu-sampling">何时使用CPU Sampling</h3>
+<p>除非你对非常精确的性能指标感兴趣（尽管受到增加的仪器成本的影响），否则您应该在大多数情况下使用采样。分析的主要优点是其准确性，但由于仪器增加了性能影响，因此大多数性能指标都会受到未知因素的影响。</p>
+<h3 id="如何运行cpu-sampling">如何运行CPU Sampling</h3>
+<h4 id="本地应用">本地应用</h4>
+<p>对于本地应用程序，从JDK二进制目录启动VisualVM，</p>
+<ol>
+<li>在要在左侧屏幕上监视的进程上选择（双击）。</li>
+<li>单击“Sampler”选项卡</li>
+<li>准备好执行测试时，选择“Sample”选项卡旁边的“CPU”按钮。</li>
+<li>测试完成后，按“停止”并按“快照”按钮。</li>
+</ol>
+<p>请记住，采集快照之前显示的数据可能非常准确，也可能不准确。您应该仅对快照进行分析。</p>
+<p>人们在执行此步骤时遇到的常见错误是获取采样屏幕的实际屏幕截图。虽然看起来很好，想的非常周到，事实上数据大多没有意义 - 因为大多数情况下，性能瓶颈会在调用层次结构的某个更深处，而不会从概述中看到。</p>
+<h4 id="远程应用">远程应用</h4>
+<p>对于远程应用程序，该过程非常相似，但它需要与要监视的Java进程建立JMX连接。</p>
+<ol>
+<li>在应用程序上启用JMX端口。这超出了本文的范围，但您可以查看官方Oracle文档以获取更多详细信息： 使用JMX技术进行监视和管理</li>
+<li>右键单击左侧屏幕中的“远程”选项卡。</li>
+<li>选择“添加远程主机”</li>
+<li>填写主机名。大多数情况下，这已足够，但根据您在远程进程上启用JMX的方式，您可能还需要选中“高级设置”选项卡。</li>
+<li>右键单击新添加的主机，然后选择“添加JMX连接”。</li>
+<li>填写连接详细信息（包括端口号）和显示名称。如果您使用多个进程部署应用程序，则应输入描述性显示名称。</li>
+<li>双击新添加的JMX连接。</li>
+<li>从这一点开始，步骤与“本地应用程序”中的步骤相同。</li>
+</ol>
+<h3 id="self-time-和-self-time-cpu之间的区别">“Self Time” 和 “Self Time (CPU)之间的区别</h3>
+<p>在测试过程中，VisualVM 展示了2个相关的指标，但它们之前有明显的差异：</p>
+<ul>
+<li>self time - 计算在该方法中花费的总时间，包括锁定或其他阻塞行为所花费的时间</li>
+<li>self time (cpu) - 计算在该方法中花费的总时间，不包括线程被阻止的时间</li>
+</ul>
+<p>现在，你要决定的内容：</p>
+<ul>
+<li>如果你想专注于优化多线程交互，那么你应该瞄准self time  值，包括线程被阻塞的时间</li>
+<li>如果你对整体性能感兴趣并且不太关心多线程交互，那么应该只关注self time （cpu）。</li>
+</ul>
+<p>但请注意你的测试结果，如果你有一个保持连接打开的线程，很可能你会看到一些非常大的self time。这是正常的，这不是issue。</p>
+<blockquote>
+<p>本文翻译自 http://greyfocus.com/2016/05/visualvm-sampling/</p>
+</blockquote>
+
+              </div>
+              <div class="toc-container">
+                <ul class="markdownIt-TOC">
+<li>
+<ul>
+<li>
+<ul>
+<li><a href="#sampling-vs-profiling">Sampling vs Profiling</a>
+<ul>
+<li><a href="#profiling">Profiling</a></li>
+<li><a href="#sampling">Sampling</a></li>
+</ul>
+</li>
+<li><a href="#%E4%BD%95%E6%97%B6%E4%BD%BF%E7%94%A8cpu-sampling">何时使用CPU Sampling</a></li>
+<li><a href="#%E5%A6%82%E4%BD%95%E8%BF%90%E8%A1%8Ccpu-sampling">如何运行CPU Sampling</a>
+<ul>
+<li><a href="#%E6%9C%AC%E5%9C%B0%E5%BA%94%E7%94%A8">本地应用</a></li>
+<li><a href="#%E8%BF%9C%E7%A8%8B%E5%BA%94%E7%94%A8">远程应用</a></li>
+</ul>
+</li>
+<li><a href="#self-time-%E5%92%8C-self-time-cpu%E4%B9%8B%E9%97%B4%E7%9A%84%E5%8C%BA%E5%88%AB">“Self Time” 和 “Self Time (CPU)之间的区别</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+              </div>
+            </div>
+          </article>
+        </div>
+
+        
+          <div class="next-post">
+            <div class="next">下一篇</div>
+            <a href="https://netyjq.github.io/post/an-experience-of-solve-dubbo-deserialization-problem">
+              <h3 class="post-title">
+                dubbo反序列化引发的性能问题
+              </h3>
+            </a>
+          </div>
+        
+
+        
+          
+            <link rel="stylesheet" href="https://unpkg.com/gitalk/dist/gitalk.css">
+<script src="https://unpkg.com/gitalk/dist/gitalk.min.js"></script>
+
+<div id="gitalk-container"></div>
+
+<script>
+
+  var gitalk = new Gitalk({
+    clientID: '5d6b9c9336c7edc32dce',
+    clientSecret: 'db95541cd744854feb3628bf9efea21b5fad428d',
+    repo: 'netyjq.github.io',
+    owner: 'netyjq',
+    admin: ['netyjq'],
+    id: (location.pathname).substring(0, 49),      // Ensure uniqueness and length less than 50
+    distractionFreeMode: false  // Facebook-like distraction free mode
+  })
+
+  gitalk.render('gitalk-container')
+
+</script>
+
+          
+
+          
+        
+
+        <div class="site-footer">
+  Powered by <a href="https://github.com/netyjq/" target="_blank">netyjq</a> | 
+  <a class="rss" href="https://netyjq.github.io/atom.xml" target="_blank">RSS</a>
+</div>
+
+<script>
+  hljs.initHighlightingOnLoad()
+
+  let mainNavLinks = document.querySelectorAll(".markdownIt-TOC a");
+
+  // This should probably be throttled.
+  // Especially because it triggers during smooth scrolling.
+  // https://lodash.com/docs/4.17.10#throttle
+  // You could do like...
+  // window.addEventListener("scroll", () => {
+  //    _.throttle(doThatStuff, 100);
+  // });
+  // Only not doing it here to keep this Pen dependency-free.
+
+  window.addEventListener("scroll", event => {
+    let fromTop = window.scrollY;
+
+    mainNavLinks.forEach((link, index) => {
+      let section = document.getElementById(decodeURI(link.hash).substring(1));
+      let nextSection = null
+      if (mainNavLinks[index + 1]) {
+        nextSection = document.getElementById(decodeURI(mainNavLinks[index + 1].hash).substring(1));
+      }
+      if (section.offsetTop <= fromTop) {
+        if (nextSection) {
+          if (nextSection.offsetTop > fromTop) {
+            link.classList.add("current");
+          } else {
+            link.classList.remove("current");    
+          }
+        } else {
+          link.classList.add("current");
+        }
+      } else {
+        link.classList.remove("current");
+      }
+    });
+  });
+
+</script>
+
+      </div>
+    </div>
+  </body>
+</html>

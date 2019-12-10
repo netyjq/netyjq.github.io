@@ -1,0 +1,644 @@
+<html>
+  <head>
+    <meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Spring —— Bean | yjq.wiki</title>
+<meta name="description" content="it's never too old to learn" />
+<link rel="shortcut icon" href="https://netyjq.github.io/favicon.ico?v=1575944462433">
+<link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.2/css/all.css" integrity="sha384-fnmOCqbTlWIlj8LyTjo7mOUStjsKC4pOpQbqyi7RrhN7udi9RwhKkMHpvLbHG9Sr" crossorigin="anonymous">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.10.0/katex.min.css">
+<link rel="stylesheet" href="https://netyjq.github.io/styles/main.css">
+
+<script src="https://cdn.bootcss.com/highlight.js/9.12.0/highlight.min.js"></script>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Droid+Serif:400,700">
+
+
+
+  </head>
+  <body>
+    <div class="main">
+      <div class="main-content">
+        <div class="site-header">
+  <a href="https://netyjq.github.io">
+  <img class="avatar" src="https://netyjq.github.io/images/avatar.png?v=1575944462433" alt="">
+  </a>
+  <h1 class="site-title">
+    yjq.wiki
+  </h1>
+  <p class="site-description">
+    it's never too old to learn
+  </p>
+  <div class="menu-container">
+    
+      
+        <a href="/" class="menu">
+          首页
+        </a>
+      
+    
+      
+        <a href="/archives" class="menu">
+          归档
+        </a>
+      
+    
+      
+        <a href="/tags" class="menu">
+          标签
+        </a>
+      
+    
+      
+        <a href="/post/about" class="menu">
+          关于
+        </a>
+      
+    
+  </div>
+  <div class="social-container">
+    
+      
+    
+      
+    
+      
+    
+      
+    
+      
+    
+  </div>
+</div>
+
+        <div class="post-detail">
+          <article class="post">
+            <h2 class="post-title">
+              Spring —— Bean
+            </h2>
+            <div class="post-info">
+              <span>
+                2016-03-24
+              </span>
+              <span>
+                16 min read
+              </span>
+              
+                <a href="https://netyjq.github.io/tag/EsArW3ASj" class="post-tag">
+                  # Spring
+                </a>
+              
+            </div>
+            
+            <div class="post-content-wrapper">
+              <div class="post-content">
+                <p>本专题将从4个方面来讲解。分别是：Bean的配置项、Bean的作用域、Bean的生命周期、Bean的自动装配</p>
+<!-- more -->
+<ol>
+<li>Bean的配置项</li>
+<li>Bean的作用域</li>
+<li>Bean的生命周期</li>
+<li>Bean的自动装配</li>
+</ol>
+<h2 id="bean的配置项">Bean的配置项</h2>
+<ul>
+<li>id 在整个IOC容器中bean的唯一标识</li>
+<li>class 具体要实例化的类</li>
+<li>scope 范围，作用域</li>
+<li>Constructor arguments 构造器参数</li>
+<li>Properties 属性</li>
+<li>Autowiring mode 自动装配模式</li>
+<li>lazy-initialization mode 懒加载模式</li>
+<li>Initialization/destruction method 初始化和销毁方法</li>
+<li>...</li>
+</ul>
+<h2 id="bean的作用域">Bean的作用域</h2>
+<ul>
+<li>singleton  ：单例，指的是一个Bean容器只存在一份。</li>
+<li>prototype  ：每次请求（每次使用）创建新的实例，destory方式不生效</li>
+<li>request  ：每次htpp请求创建一个实例， 且仅在当前request内有效。</li>
+<li>session  ：每次htpp请求，当前session内有效。</li>
+<li>global session  ：在一个全局的HTTP Session 中，一个bean定义对应一个实例。典型情况下，仅在使用portlet context的时候有效。该作用域仅在基于web的Spring ApplicationContext 情形下有效。</li>
+</ul>
+<h3 id="singleton-作用域-默认单例">singleton 作用域 （默认单例）</h3>
+<p>当一个bean的作用域为singleton, 那么Spring IOC容器中只会存在一个共享的bean实例，并且所有对bean的请求，只要id与该bean定义相匹配，则只会返回bean的同一实例。换言之，当把一个bean定义设置为singlton作用域时，Spring IoC容器只会创建该bean定义的唯一实例。这个单一实例会被存储到单例缓存（singleton cache）中，并且所有针对该bean的后续请求和引用都将返回被缓存的对象实例。</p>
+<p>接下来用代码验证一下sington作用域</p>
+<p>新建一个类 <code>BeanScope.java</code></p>
+<pre><code class="language-java">package com.springstudy.bean;
+public class BeanScope {
+    public void say() {
+        System.out.println(&quot;BeanScope say：&quot;+this.hashCode());
+    }
+}
+</code></pre>
+<p>在resource文件夹新建一个 <code>spring-beann.xml</code></p>
+<pre><code class="language-xml">&lt;?xml version=&quot;1.0&quot; encoding=&quot;UTF-8&quot;?&gt;&lt;beans xmlns=&quot;http://www.springframework.org/schema/beans&quot;
+       xmlns:xsi=&quot;http://www.w3.org/2001/XMLSchema-instance&quot;
+       xsi:schemaLocation=&quot;http://www.springframework.org/schema/beans
+       http://www.springframework.org/schema/beans/spring-beans.xsd&quot;&gt;
+       &lt;bean id=&quot;beanScope&quot; class=&quot;com.springstudy.bean.BeanScope&quot; scope=&quot;singleton&quot;&gt;&lt;/bean&gt;
+&lt;/beans&gt;
+</code></pre>
+<p>新建一个测试类 <code>BeanScopeTest.java</code></p>
+<pre><code class="language-java">package com.springstudy.bean;
+import com.springstudy.ioc.service.PersonService;
+import org.junit.BeforeClass;
+import org.junit.Test;
+import org.springframework.context.ApplicationContext;
+import org.springframework.context.support.ClassPathXmlApplicationContext;
+
+public class BeanScopeTest {
+    @Test
+    public void testSay() {
+        ApplicationContext context = new ClassPathXmlApplicationContext(&quot;classpath*:spring-bean.xml&quot;);
+        BeanScope beanScope = (BeanScope)context.getBean(&quot;beanScope&quot;);
+        beanScope.say();
+        BeanScope beanScope1 = (BeanScope)context.getBean(&quot;beanScope&quot;);
+        beanScope1.say();
+    }
+}
+</code></pre>
+<p>运行test方法，控制台输出：</p>
+<pre><code class="language-html">BeanScope say：275963305
+BeanScope say：275963305
+</code></pre>
+<p>由此可见，两次输出的hashcode都是一致的。（注意：如果是本案例写在两个@Test 方法中，输出的内容是不一样的，因为此时不是在同一个Bean容器中）</p>
+<h3 id="prototype-作用域">prototype 作用域</h3>
+<p>Prototype作用域的bean会导致在每次对该bean请求（将其注入到另一个bean中，或者以程序的方式调用容器的getBean() 方法）时都会创建一个新的bean实例 。根据经验，对有状态的bean应该使用prototype作用域，而对无状态的bean则应该使用singleton作用域。</p>
+<p>将上面的 spring-bean.xml 修改一下</p>
+<pre><code class="language-xml">&lt;?xml version=&quot;1.0&quot; encoding=&quot;UTF-8&quot;?&gt;&lt;beans xmlns=&quot;http://www.springframework.org/schema/beans&quot;
+       xmlns:xsi=&quot;http://www.w3.org/2001/XMLSchema-instance&quot;
+       xsi:schemaLocation=&quot;http://www.springframework.org/schema/beans
+       http://www.springframework.org/schema/beans/spring-beans.xsd&quot;&gt;
+       &lt;bean id=&quot;beanScope&quot; class=&quot;com.springstudy.bean.BeanScope&quot; scope=&quot;prototype&quot;&gt;&lt;/bean&gt;
+&lt;/beans&gt;
+</code></pre>
+<p>控制台输出：</p>
+<pre><code>BeanScope say：135278580
+BeanScope say：1589395534
+</code></pre>
+<p>可以看到设置prototype，两个bean不是同一个bean实例。</p>
+<h2 id="bean-的生命周期">Bean 的生命周期</h2>
+<p>Bean的生命周期即：Bean的初始化与销毁。</p>
+<p>实现 Bean 的初始化有3种方式：</p>
+<ol>
+<li>实现 <code>org.springframework.beans.factory.InitializingBean</code> 接口，覆盖 <code>afterPropertiesSet</code>方法</li>
+<li>配置 bean的 <code>init-method</code> 属性</li>
+<li>配置全局的默认初始化方法：在 <code>&lt;beans&gt;&lt;/beans&gt;</code> 中配置 <code>default-init-method</code> 属性</li>
+</ol>
+<p>实现 Bean 的销毁也有三种方式：</p>
+<ol>
+<li>实现 <code>org.springframework.beans.factory.DisposableBean</code> 接口，覆盖<code>destroy</code> 方法</li>
+<li>配置 bean 的 <code>destroy-method</code> 属性。</li>
+<li>配置全局的默认销毁方法：在 <code>&lt;beans&gt;&lt;/beans&gt;</code> 中配置 <code>default-destroy-method</code> 属性</li>
+</ol>
+<p>接下来通过代码来一一讲解。</p>
+<h4 id="配置-bean的-init-method-destroy-method-属性">配置 bean的 <code>init-method</code> 、 <code>destroy-method</code> 属性</h4>
+<p>新建 <code>BeanLifeCycle1.java</code></p>
+<pre><code class="language-java">package com.springstudy.lifecycle;
+public class BeanLifeCycle1 {
+    /**
+     * 初始化方法
+     */
+    public void start() {
+        System.out.println(&quot;Bean start...&quot;);
+    }
+    /**
+     * 销毁方法
+     */
+    public void stop() {
+        System.out.println(&quot;Bean stop...&quot;);
+    }
+}
+</code></pre>
+<p>在<code>resource</code>下新建 <code>spring-lifecycle.xml</code></p>
+<pre><code class="language-xml">&lt;?xml version=&quot;1.0&quot; encoding=&quot;UTF-8&quot;?&gt;&lt;beans xmlns=&quot;http://www.springframework.org/schema/beans&quot;
+       xmlns:xsi=&quot;http://www.w3.org/2001/XMLSchema-instance&quot;
+       xsi:schemaLocation=&quot;http://www.springframework.org/schema/beans
+       http://www.springframework.org/schema/beans/spring-beans.xsd&quot;&gt;
+       &lt;bean id=&quot;beanLifeCycle1&quot; class=&quot;com.springstudy.lifecycle.BeanLifeCycle1&quot; init-method=&quot;start&quot; destroy-method=&quot;stop&quot;&gt;&lt;/bean&gt;
+&lt;/beans&gt;
+</code></pre>
+<p>新建 <code>BeanLifeCycle1Test.java</code></p>
+<pre><code class="language-java">package com.springstudy.lifecycle;
+import com.springstudy.bean.BeanScope;
+import org.junit.Before;
+import org.junit.Test;
+import org.springframework.context.ApplicationContext;
+import org.springframework.context.support.ClassPathXmlApplicationContext;
+public class BeanLifeCycle1Test {
+    private ClassPathXmlApplicationContext context;
+    @Test
+    public void test() {
+        context = new ClassPathXmlApplicationContext(&quot;classpath*:spring-lifecycle.xml&quot;);
+        BeanLifeCycle1 beanLifeCycle1 = (BeanLifeCycle1)context.getBean(&quot;beanLifeCycle1&quot;);
+        context.close();
+    }
+}
+</code></pre>
+<p>控制台输出：</p>
+<pre><code class="language-html">Bean start...
+Bean stop...   
+</code></pre>
+<blockquote>
+<p>注意：如果没有 context.close()  将不会执行 stop() 方法</p>
+</blockquote>
+<h4 id="实现-initializingbean接口覆盖-afterpropertiesset-方法实现-disposablebean接口覆盖destroy方法">实现 <code>InitializingBean</code>接口，覆盖 <code>afterPropertiesSet</code> 方法，实现 <code>DisposableBean</code>接口，覆盖<code>destroy</code>方法</h4>
+<p>新建 <code>BeanLifeCycle2.java</code></p>
+<pre><code class="language-java">package com.springstudy.lifecycle;
+import org.springframework.beans.factory.DisposableBean;
+import org.springframework.beans.factory.InitializingBean;
+public class BeanLifeCycle2 implements InitializingBean, DisposableBean {
+    @Override
+    public void destroy() throws Exception {
+        System.out.println(&quot;Bean destroyed...&quot;);
+    }
+    @Override
+    public void afterPropertiesSet() throws Exception {
+        System.out.println(&quot;Bean afterPropertiesSet...&quot;);
+    }
+}
+</code></pre>
+<p>修改 <code>spring-lifecycle.xml</code></p>
+<pre><code class="language-xml">&lt;?xml version=&quot;1.0&quot; encoding=&quot;UTF-8&quot;?&gt;&lt;beans xmlns=&quot;http://www.springframework.org/schema/beans&quot;
+       xmlns:xsi=&quot;http://www.w3.org/2001/XMLSchema-instance&quot;
+       xsi:schemaLocation=&quot;http://www.springframework.org/schema/beans
+       http://www.springframework.org/schema/beans/spring-beans.xsd&quot;&gt;
+       &lt;bean id=&quot;beanLifeCycle2&quot; class=&quot;com.springstudy.lifecycle.BeanLifeCycle2&quot;&gt;&lt;/bean&gt;
+&lt;/beans&gt;
+</code></pre>
+<p>新建 <code>BeanLifeCycle2Test.java</code></p>
+<pre><code class="language-java">package com.springstudy.lifecycle;
+import org.junit.Test;
+import org.springframework.context.support.ClassPathXmlApplicationContext;
+public class BeanLifeCycle2Test {
+    private ClassPathXmlApplicationContext context;
+    @Test    
+    public void test()   {
+        context = new ClassPathXmlApplicationContext(&quot;classpath*:spring-lifecycle.xml&quot;);
+        BeanLifeCycle2 beanLifeCycle2 = (BeanLifeCycle2)context.getBean(&quot;beanLifeCycle2&quot;);
+        context.close();
+    }
+}
+</code></pre>
+<p>控制台输出：</p>
+<pre><code class="language-html">Bean afterPropertiesSet...
+Bean destroyed...
+</code></pre>
+<h4 id="配置全局的默认初始化方法-default-init-method-和销毁方法-default-destroy-method">配置全局的默认初始化方法 <code>default-init-method</code> 和销毁方法 <code>default-destroy-method</code></h4>
+<p>新建 <code>BeanLifeCycle3.java</code></p>
+<pre><code class="language-java">package com.springstudy.lifecycle;
+public class BeanLifeCycle3 {
+    public void defaultInit() {
+        System.out.println(&quot;Bean defautInit...&quot;);
+    }
+    public void defaultDestroy() {
+        System.out.println(&quot;Bean defaultDestroy...&quot;);
+    }
+}
+</code></pre>
+<p>修改 <code>spring-lifecycle.xml</code></p>
+<pre><code class="language-xml">&lt;?xml version=&quot;1.0&quot; encoding=&quot;UTF-8&quot;?&gt;&lt;beans xmlns=&quot;http://www.springframework.org/schema/beans&quot;
+       xmlns:xsi=&quot;http://www.w3.org/2001/XMLSchema-instance&quot;
+       xsi:schemaLocation=&quot;http://www.springframework.org/schema/beans
+       http://www.springframework.org/schema/beans/spring-beans.xsd&quot; default-init-method=&quot;defaultInit&quot;
+        default-destroy-method=&quot;defaultDestroy&quot;&gt;
+       &lt;bean id=&quot;beanLifeCycle3&quot; class=&quot;com.springstudy.lifecycle.BeanLifeCycle3&quot;&gt;&lt;/bean&gt;
+&lt;/beans&gt;
+</code></pre>
+<p>新建 <code>BeanLifeCycle3Test.java</code></p>
+<pre><code class="language-java">package com.springstudy.lifecycle;
+import org.junit.Test;
+import org.springframework.context.support.ClassPathXmlApplicationContext;
+public class BeanLifeCycle3Test {
+    private ClassPathXmlApplicationContext context;
+    @Test
+    public void test() {
+        context = new ClassPathXmlApplicationContext(&quot;classpath*:spring-lifecycle.xml&quot;);
+        BeanLifeCycle3 beanLifeCycle3 = (BeanLifeCycle3)context.getBean(&quot;beanLifeCycle3&quot;);
+        context.close();
+    }
+}
+</code></pre>
+<p>控制台输出</p>
+<pre><code>Bean defautInit...
+Bean defaultDestroy...  
+</code></pre>
+<blockquote>
+<p>延伸：以上都验证了各个初始化和销毁的方法，那么如果这三种方式同时配置和运行会有什么样的结果？</p>
+</blockquote>
+<p>还是用代码说话</p>
+<p>新建 <code>BeanLifeCycle.java</code></p>
+<pre><code class="language-java">package com.springstudy.lifecycle;
+import org.springframework.beans.factory.DisposableBean;
+import org.springframework.beans.factory.InitializingBean;
+public class BeanLifeCycle implements InitializingBean, DisposableBean {
+    /****************直接配置bean的方式*********/
+    public void start() {
+        System.out.println(&quot;Bean start...&quot;);
+    }
+    public void stop() {
+        System.out.println(&quot;Bean stop...&quot;);
+    }
+    /***************实现接口的方式**************/
+    @Override
+    public void destroy() throws Exception {
+        System.out.println(&quot;Bean destroyed...&quot;);
+    }
+    @Override
+    public void afterPropertiesSet() throws Exception {
+        System.out.println(&quot;Bean afterPropertiesSet...&quot;);
+    }
+    /****************全局配置的方法**************/
+    public void defaultInit() {
+        System.out.println(&quot;Bean defautInit...&quot;);
+    }
+    public void defaultDestroy() {
+        System.out.println(&quot;Bean defaultDestroy...&quot;);
+    }
+}
+</code></pre>
+<p>修改 <code>spring-lifecycle.xml</code></p>
+<pre><code class="language-xml">&lt;?xml version=&quot;1.0&quot; encoding=&quot;UTF-8&quot;?&gt;&lt;beans xmlns=&quot;http://www.springframework.org/schema/beans&quot;
+       xmlns:xsi=&quot;http://www.w3.org/2001/XMLSchema-instance&quot;
+       xsi:schemaLocation=&quot;http://www.springframework.org/schema/beans
+       http://www.springframework.org/schema/beans/spring-beans.xsd&quot; default-init-method=&quot;defaultInit&quot;
+        default-destroy-method=&quot;defaultDestroy&quot;&gt;
+       &lt;bean id=&quot;beanLifeCycle&quot; class=&quot;com.springstudy.lifecycle.BeanLifeCycle&quot; init-method=&quot;start&quot;
+             destroy-method=&quot;stop&quot;&gt;&lt;/bean&gt;
+&lt;/beans&gt;
+
+</code></pre>
+<p>新建 <code>BeanLifeCycleTest.java</code></p>
+<pre><code class="language-java">package com.springstudy.lifecycle;
+import org.junit.Test;
+import org.springframework.context.support.ClassPathXmlApplicationContext;
+public class BeanLifeCycleTest {
+    private ClassPathXmlApplicationContext context;
+    @Test
+    public void test() {
+        context = new ClassPathXmlApplicationContext(&quot;classpath*:spring-lifecycle.xml&quot;);
+        BeanLifeCycle beanLifeCycle = (BeanLifeCycle)context.getBean(&quot;beanLifeCycle&quot;);
+        context.close();
+    }
+}
+</code></pre>
+<p>控制台输出：</p>
+<pre><code class="language-html">Bean afterPropertiesSet...
+Bean start...
+Bean destroyed...
+Bean stop...  
+</code></pre>
+<h4 id="小结">小结</h4>
+<blockquote>
+<p>三种方式全部使用的时候，全局默认的初始化和销毁方法将自动失效，实现接口的方式比配置bean的方式要先执行。</p>
+</blockquote>
+<h2 id="bean的自动装配">Bean的自动装配</h2>
+<p>bean的自动装配 <code>Autowiring</code> 的几种类型</p>
+<ul>
+<li><code>No</code> ：不做任何操作</li>
+<li><code>byName</code>： 根据属性名称自动装配，此选项将检查容器并根据名字查找与属性名完全一致的bean，并将其与属性自动装配。</li>
+<li><code>byType</code>：如果容器中存在一个与指定属性类型形同的bean，那么将与该属性自动装配；如果存在多个该类型bean，那么将抛出异常，并会提示不能使用byType方式自动装配；如果没有找到相匹配的bean，那么什么事情都不发生。</li>
+<li><code>Contructor</code>：与<code>byType</code>类似，不同之处在于它用于构造器参数。如果容器中没有找到与构造参数类型一致的bean，将抛出异常。</li>
+</ul>
+<h3 id="byname">byName</h3>
+<p>新建 <code>AutoWiringDao.java</code></p>
+<pre><code class="language-java">package com.springstudy.autowiring;
+public class AutoWiringDao {
+    public void say(String word) {
+        System.out.println(&quot;AutoWiringDAO：&quot; + word);
+    }
+}
+</code></pre>
+<p>新建  <code>AutoWiringService.java</code></p>
+<pre><code class="language-java">package com.springstudy.autowiring;
+public class AutoWiringService {
+    /* set方式注入 */
+    private AutoWiringDao autoWiringDao;
+    public void setAutoWiringDao(AutoWiringDao autoWiringDao) {
+        this.autoWiringDao = autoWiringDao;
+    }
+    public void say(String word) {
+        this.autoWiringDao.say(word);
+    }
+}
+</code></pre>
+<p>新建 <code>spring-autowiring.xml</code></p>
+<pre><code class="language-xml">&lt;?xml version=&quot;1.0&quot; encoding=&quot;UTF-8&quot;?&gt;&lt;beans xmlns=&quot;http://www.springframework.org/schema/beans&quot;
+       xmlns:xsi=&quot;http://www.w3.org/2001/XMLSchema-instance&quot;
+       xsi:schemaLocation=&quot;http://www.springframework.org/schema/beans
+       http://www.springframework.org/schema/beans/spring-beans.xsd&quot; default-autowire=&quot;byName&quot;&gt;
+       &lt;!-- byName是根据bean的id名称去查找bean,所以这里的bean的id名称要与AutoWiringService中set注入的变量名称一致;
+       byTppe是根据bean的类型去查找bean，与id的名称无关，可以任意命名或者省略 ；
+       constructor与byType类似，它是根据构造参数的类型去查找bean --&gt;
+       &lt;bean id=&quot;autoWiringDao&quot; class=&quot;com.springstudy.autowiring.AutoWiringDao&quot;&gt;&lt;/bean&gt;
+       &lt;bean id=&quot;autoWiringService&quot; class=&quot;com.springstudy.autowiring.AutoWiringService&quot;&gt;
+              &lt;!-- 不使用自动装配的做法 --&gt;
+              &lt;!--&lt;property name=&quot;autoWiringDao&quot; ref=&quot;autoWiringDao&quot;&gt;&lt;/property&gt;--&gt;
+       &lt;/bean&gt;
+&lt;/beans&gt;
+</code></pre>
+<p>新建 <code>AutoWiringTest.java</code></p>
+<pre><code class="language-java">package com.springstudy.autowiring;
+import com.springstudy.lifecycle.BeanLifeCycle1;
+import org.junit.Test;
+import org.springframework.context.support.ClassPathXmlApplicationContext;
+public class AutoWiringTest {
+    private ClassPathXmlApplicationContext context;
+    @Test
+    public void test() {
+        context = new ClassPathXmlApplicationContext(&quot;classpath*:spring-autowiring.xml&quot;);
+        AutoWiringService autoWiringService = (AutoWiringService)context.getBean(&quot;autoWiringService&quot;);
+        autoWiringService.say(&quot;Hello AutoWiring...&quot;);
+        context.close();
+    }
+}
+</code></pre>
+<p>控制台输出：</p>
+<pre><code class="language-html">AutoWiringDAO：Hello AutoWiring...   
+</code></pre>
+<h3 id="bytype">byType</h3>
+<p>修改 <code>spring-autowiring.xml</code></p>
+<pre><code class="language-xml">&lt;?xml version=&quot;1.0&quot; encoding=&quot;UTF-8&quot;?&gt;&lt;beans xmlns=&quot;http://www.springframework.org/schema/beans&quot;
+       xmlns:xsi=&quot;http://www.w3.org/2001/XMLSchema-instance&quot;
+       xsi:schemaLocation=&quot;http://www.springframework.org/schema/beans
+       http://www.springframework.org/schema/beans/spring-beans.xsd&quot; default-autowire=&quot;byType&quot;&gt;
+       &lt;!-- byName是根据bean的id名称去查找bean,所以这里的bean的id名称要与AutoWiringService中set注入的变量名称一致;
+       byTppe是根据bean的类型去查找bean，与id的名称无关，可以任意命名或者省略 ；
+       constructor与byType类似，它是根据构造参数的类型去查找bean --&gt;
+       &lt;bean id=&quot;autoWiringDao&quot; class=&quot;com.springstudy.autowiring.AutoWiringDao&quot;&gt;&lt;/bean&gt;
+       &lt;bean id=&quot;autoWiringService&quot; class=&quot;com.springstudy.autowiring.AutoWiringService&quot;&gt;
+              &lt;!-- 不使用自动装配的做法 --&gt;
+              &lt;!--&lt;property name=&quot;autoWiringDao&quot; ref=&quot;autoWiringDao&quot;&gt;&lt;/property&gt;--&gt;
+       &lt;/bean&gt;
+&lt;/beans&gt;
+</code></pre>
+<p>运行单元测试，控制台输出：</p>
+<pre><code>AutoWiringDAO：Hello AutoWiring...   
+</code></pre>
+<h3 id="contructor">Contructor</h3>
+<p>修改 <code>spring-autowiring.xml</code></p>
+<pre><code class="language-xml">&lt;?xml version=&quot;1.0&quot; encoding=&quot;UTF-8&quot;?&gt;&lt;beans xmlns=&quot;http://www.springframework.org/schema/beans&quot;
+       xmlns:xsi=&quot;http://www.w3.org/2001/XMLSchema-instance&quot;
+       xsi:schemaLocation=&quot;http://www.springframework.org/schema/beans
+       http://www.springframework.org/schema/beans/spring-beans.xsd&quot; default-autowire=&quot;constructor&quot;&gt;
+       &lt;!-- byName是根据bean的id名称去查找bean,所以这里的bean的id名称要与AutoWiringService中set注入的变量名称一致;
+       byTppe是根据bean的类型去查找bean，与id的名称无关，可以任意命名或者省略 ；
+       constructor与byType类似，它是根据构造参数的类型去查找bean --&gt;
+       &lt;bean id=&quot;autoWiringDao&quot; class=&quot;com.springstudy.autowiring.AutoWiringDao&quot;&gt;&lt;/bean&gt;
+       &lt;bean id=&quot;autoWiringService&quot; class=&quot;com.springstudy.autowiring.AutoWiringService&quot;&gt;
+              &lt;!-- 不使用自动装配的做法 --&gt;
+              &lt;!--&lt;property name=&quot;autoWiringDao&quot; ref=&quot;autoWiringDao&quot;&gt;&lt;/property&gt;--&gt;
+       &lt;/bean&gt;
+&lt;/beans&gt;
+</code></pre>
+<p>在 <code>AutoWiringService.java</code> 中 添加构造注入</p>
+<pre><code class="language-java">package com.springstudy.autowiring;
+public class AutoWiringService {
+    /* 构造注入 */
+    public AutoWiringService(AutoWiringDao autoWiringDao) {
+        this.autoWiringDao = autoWiringDao;
+    }
+    /* 添加无参构造方法，避免切换装配类型时候报错 */
+    public AutoWiringService() {
+    }
+    /* set方式注入 */
+    private AutoWiringDao autoWiringDao;
+
+    public void setAutoWiringDao(AutoWiringDao autoWiringDao) {
+        this.autoWiringDao = autoWiringDao;
+    }
+    public void say(String word) {
+        this.autoWiringDao.say(word);
+    }
+}
+</code></pre>
+<p>运行单元测试。控制台输出：</p>
+<pre><code>AutoWiringDAO：Hello AutoWiring...   
+</code></pre>
+<blockquote>
+<p>小结</p>
+</blockquote>
+<ol>
+<li>byName是根据bean的id名称去查找bean,所以这里的bean的id名称要与AutoWiringService中set注入的变量名称一致;</li>
+<li>byTppe是根据bean的类型去查找bean，与id的名称无关，可以任意命名或者省略 ；</li>
+<li>constructor与byType类似，它是根据构造参数的类型去查找bean</li>
+</ol>
+<p>全文完！感谢阅读。觉得不错，欢迎分享！</p>
+
+              </div>
+              <div class="toc-container">
+                <ul class="markdownIt-TOC">
+<li>
+<ul>
+<li><a href="#bean%E7%9A%84%E9%85%8D%E7%BD%AE%E9%A1%B9">Bean的配置项</a></li>
+<li><a href="#bean%E7%9A%84%E4%BD%9C%E7%94%A8%E5%9F%9F">Bean的作用域</a>
+<ul>
+<li><a href="#singleton-%E4%BD%9C%E7%94%A8%E5%9F%9F-%E9%BB%98%E8%AE%A4%E5%8D%95%E4%BE%8B">singleton 作用域 （默认单例）</a></li>
+<li><a href="#prototype-%E4%BD%9C%E7%94%A8%E5%9F%9F">prototype 作用域</a></li>
+</ul>
+</li>
+<li><a href="#bean-%E7%9A%84%E7%94%9F%E5%91%BD%E5%91%A8%E6%9C%9F">Bean 的生命周期</a><br>
+*
+<ul>
+<li><a href="#%E9%85%8D%E7%BD%AE-bean%E7%9A%84-init-method-destroy-method-%E5%B1%9E%E6%80%A7">配置 bean的 <code>init-method</code> 、 <code>destroy-method</code> 属性</a></li>
+<li><a href="#%E5%AE%9E%E7%8E%B0-initializingbean%E6%8E%A5%E5%8F%A3%E8%A6%86%E7%9B%96-afterpropertiesset-%E6%96%B9%E6%B3%95%E5%AE%9E%E7%8E%B0-disposablebean%E6%8E%A5%E5%8F%A3%E8%A6%86%E7%9B%96destroy%E6%96%B9%E6%B3%95">实现 <code>InitializingBean</code>接口，覆盖 <code>afterPropertiesSet</code> 方法，实现 <code>DisposableBean</code>接口，覆盖<code>destroy</code>方法</a></li>
+<li><a href="#%E9%85%8D%E7%BD%AE%E5%85%A8%E5%B1%80%E7%9A%84%E9%BB%98%E8%AE%A4%E5%88%9D%E5%A7%8B%E5%8C%96%E6%96%B9%E6%B3%95-default-init-method-%E5%92%8C%E9%94%80%E6%AF%81%E6%96%B9%E6%B3%95-default-destroy-method">配置全局的默认初始化方法 <code>default-init-method</code> 和销毁方法 <code>default-destroy-method</code></a></li>
+<li><a href="#%E5%B0%8F%E7%BB%93">小结</a></li>
+</ul>
+</li>
+<li><a href="#bean%E7%9A%84%E8%87%AA%E5%8A%A8%E8%A3%85%E9%85%8D">Bean的自动装配</a>
+<ul>
+<li><a href="#byname">byName</a></li>
+<li><a href="#bytype">byType</a></li>
+<li><a href="#contructor">Contructor</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+              </div>
+            </div>
+          </article>
+        </div>
+
+        
+
+        
+          
+            <link rel="stylesheet" href="https://unpkg.com/gitalk/dist/gitalk.css">
+<script src="https://unpkg.com/gitalk/dist/gitalk.min.js"></script>
+
+<div id="gitalk-container"></div>
+
+<script>
+
+  var gitalk = new Gitalk({
+    clientID: '5d6b9c9336c7edc32dce',
+    clientSecret: 'db95541cd744854feb3628bf9efea21b5fad428d',
+    repo: 'netyjq.github.io',
+    owner: 'netyjq',
+    admin: ['netyjq'],
+    id: (location.pathname).substring(0, 49),      // Ensure uniqueness and length less than 50
+    distractionFreeMode: false  // Facebook-like distraction free mode
+  })
+
+  gitalk.render('gitalk-container')
+
+</script>
+
+          
+
+          
+        
+
+        <div class="site-footer">
+  Powered by <a href="https://github.com/netyjq/" target="_blank">netyjq</a> | 
+  <a class="rss" href="https://netyjq.github.io/atom.xml" target="_blank">RSS</a>
+</div>
+
+<script>
+  hljs.initHighlightingOnLoad()
+
+  let mainNavLinks = document.querySelectorAll(".markdownIt-TOC a");
+
+  // This should probably be throttled.
+  // Especially because it triggers during smooth scrolling.
+  // https://lodash.com/docs/4.17.10#throttle
+  // You could do like...
+  // window.addEventListener("scroll", () => {
+  //    _.throttle(doThatStuff, 100);
+  // });
+  // Only not doing it here to keep this Pen dependency-free.
+
+  window.addEventListener("scroll", event => {
+    let fromTop = window.scrollY;
+
+    mainNavLinks.forEach((link, index) => {
+      let section = document.getElementById(decodeURI(link.hash).substring(1));
+      let nextSection = null
+      if (mainNavLinks[index + 1]) {
+        nextSection = document.getElementById(decodeURI(mainNavLinks[index + 1].hash).substring(1));
+      }
+      if (section.offsetTop <= fromTop) {
+        if (nextSection) {
+          if (nextSection.offsetTop > fromTop) {
+            link.classList.add("current");
+          } else {
+            link.classList.remove("current");    
+          }
+        } else {
+          link.classList.add("current");
+        }
+      } else {
+        link.classList.remove("current");
+      }
+    });
+  });
+
+</script>
+
+      </div>
+    </div>
+  </body>
+</html>

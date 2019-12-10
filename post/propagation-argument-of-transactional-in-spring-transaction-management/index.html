@@ -1,0 +1,228 @@
+<html>
+  <head>
+    <meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Spring事务管理中@Transactional的propagation参数 | yjq.wiki</title>
+<meta name="description" content="it's never too old to learn" />
+<link rel="shortcut icon" href="https://netyjq.github.io/favicon.ico?v=1575944462433">
+<link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.2/css/all.css" integrity="sha384-fnmOCqbTlWIlj8LyTjo7mOUStjsKC4pOpQbqyi7RrhN7udi9RwhKkMHpvLbHG9Sr" crossorigin="anonymous">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.10.0/katex.min.css">
+<link rel="stylesheet" href="https://netyjq.github.io/styles/main.css">
+
+<script src="https://cdn.bootcss.com/highlight.js/9.12.0/highlight.min.js"></script>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Droid+Serif:400,700">
+
+
+
+  </head>
+  <body>
+    <div class="main">
+      <div class="main-content">
+        <div class="site-header">
+  <a href="https://netyjq.github.io">
+  <img class="avatar" src="https://netyjq.github.io/images/avatar.png?v=1575944462433" alt="">
+  </a>
+  <h1 class="site-title">
+    yjq.wiki
+  </h1>
+  <p class="site-description">
+    it's never too old to learn
+  </p>
+  <div class="menu-container">
+    
+      
+        <a href="/" class="menu">
+          首页
+        </a>
+      
+    
+      
+        <a href="/archives" class="menu">
+          归档
+        </a>
+      
+    
+      
+        <a href="/tags" class="menu">
+          标签
+        </a>
+      
+    
+      
+        <a href="/post/about" class="menu">
+          关于
+        </a>
+      
+    
+  </div>
+  <div class="social-container">
+    
+      
+    
+      
+    
+      
+    
+      
+    
+      
+    
+  </div>
+</div>
+
+        <div class="post-detail">
+          <article class="post">
+            <h2 class="post-title">
+              Spring事务管理中@Transactional的propagation参数
+            </h2>
+            <div class="post-info">
+              <span>
+                2016-11-25
+              </span>
+              <span>
+                4 min read
+              </span>
+              
+                <a href="https://netyjq.github.io/tag/EsArW3ASj" class="post-tag">
+                  # Spring
+                </a>
+              
+            </div>
+            
+            <div class="post-content-wrapper">
+              <div class="post-content">
+                <p>关于Spring事务管理中@Transactional的其他配置问题，请参看http://deltamaster.is-programmer.com/posts/28488.html。</p>
+<p>本文重点讲一讲propagation参数，propagation配置的就是一个事务的传播性问题。</p>
+<!-- more -->
+<p>所谓事务传播性，就是被调用者的事务与调用者的事务之间的关系。举例说明。</p>
+<pre><code>//in A.java
+Class A {
+    @Transactional(propagation=propagation.REQUIRED)
+    public void aMethod {
+        B b = new B();
+        b.bMethod();
+    }
+}
+
+//in B.java
+Class B {
+    @Transactional(propagation=propagation.REQUIRED)
+    public void bMethod {
+        //something
+    }
+}
+</code></pre>
+<p>在上面这个例子中，传播性被设为了REQUIRED，注意，这是默认值，也即不进行该参数配置等于配置成REQUIRED。</p>
+<p>REQUIRED的含义是，支持当前已经存在的事务，如果还没有事务，就创建一个新事务。在上面这个例子中，假设调用aMethod前不存在任何事务，那么执行aMethod时会自动开启一个事务，而由aMethod调用bMethod时，由于事务已经存在，因此会使用已经存在的事务（也就是执行aMethod之前创建的那个事务）。</p>
+<p>对于这样的配置，如果bMethod过程中发生异常需要回滚，那么aMethod中所进行的所有数据库操作也将同时被回滚，因为这两个方法使用了同一个事务。</p>
+<p>MANDATORY的含义是，支持当前已经存在的事务，如果还没有事务，就抛出一个异常。如果上例中aMethod的传播性配置为MANDATORY，我们就无法在没有事务的情况下调用aMethod，因此，传播性为MANDATORY的方法必定是一个其他事务的子事务，当逻辑上独立存在没有意义或者可能违反数据、事务完整性的时候，就可以考虑设置这样的传播性设置。</p>
+<p>NESTED的含义是，在当前事务中创建一个嵌套事务，如果还没有事务，那么就简单地创建一个新事务。</p>
+<p>REQUIRES_NEW的含义是，挂起当前事务，创建一个新事务，如果还没有事务，就简单地创建一个新事务。</p>
+<p>请注意以上两者的区别，大多数情况下一上两种传播性行为是类似的，不过在事务回滚的问题上，以上两者有很大的区别。</p>
+<p>首先，REQUIRES_NEW会创建一个与原事务无关的新事务，尽管是由一个事务调用了另一个事务，但却没有父子关系。</p>
+<p>如果bMethod的传播性是REQUIRES_NEW，而抛出了一个异常，则bMethod一定会被回滚，而如果aMethod捕获并处理了这个bMethod抛出的异常，那么aMethod仍有可能成功提交。当然，如果aMethod没有处理这个异常，那么aMethod也会被回滚。</p>
+<p>如果aMethod在bMethod完成后出现了异常，那么bMethod已经提交而无法回滚，只有aMethod被回滚了。</p>
+<p>而对于NESTED，虽然也会创建一个新事务，但是这个事务与调用者是有父子关系的相互依存的。</p>
+<p>如果bMethod的传播性是NESTED，而抛出了一个异常，事务的回滚行为与REQUIRES_NEW是一致的。</p>
+<p>但是如果aMethod在bMethod完成后出现了异常，bMethod同样也会被回滚。因为事实上，EJB中没有对于NESTED传播性的类似实现，NESTED并不是真正启动了一个事务，而是开启了一个新的savepoint。</p>
+<p>NEVER的含义很简单，就是强制要求不在事务中运行，如果当前存在一个事务，则抛出异常，因此如果bMethod传播性是NEVER，则一定抛出异常。</p>
+<p>NOT_SUPPORTED的含义是，强制不在事务中运行，如果当前存在一个事务，则挂起该事务。</p>
+<p>SUPPORTS的含义是，支持当前事务，如果没有事务那么就不在事务中运行。SUPPORTS传播性的逻辑含义比较模糊，因此一般是不推荐使用的。</p>
+
+              </div>
+              <div class="toc-container">
+                
+              </div>
+            </div>
+          </article>
+        </div>
+
+        
+          <div class="next-post">
+            <div class="next">下一篇</div>
+            <a href="https://netyjq.github.io/post/com-mysql-jdbc-PacketTooBigException-Packet-for-query-is-too-large-解决方式">
+              <h3 class="post-title">
+                com.mysql.jdbc.PacketTooBigException: Packet for query is too large 解决方式
+              </h3>
+            </a>
+          </div>
+        
+
+        
+          
+            <link rel="stylesheet" href="https://unpkg.com/gitalk/dist/gitalk.css">
+<script src="https://unpkg.com/gitalk/dist/gitalk.min.js"></script>
+
+<div id="gitalk-container"></div>
+
+<script>
+
+  var gitalk = new Gitalk({
+    clientID: '5d6b9c9336c7edc32dce',
+    clientSecret: 'db95541cd744854feb3628bf9efea21b5fad428d',
+    repo: 'netyjq.github.io',
+    owner: 'netyjq',
+    admin: ['netyjq'],
+    id: (location.pathname).substring(0, 49),      // Ensure uniqueness and length less than 50
+    distractionFreeMode: false  // Facebook-like distraction free mode
+  })
+
+  gitalk.render('gitalk-container')
+
+</script>
+
+          
+
+          
+        
+
+        <div class="site-footer">
+  Powered by <a href="https://github.com/netyjq/" target="_blank">netyjq</a> | 
+  <a class="rss" href="https://netyjq.github.io/atom.xml" target="_blank">RSS</a>
+</div>
+
+<script>
+  hljs.initHighlightingOnLoad()
+
+  let mainNavLinks = document.querySelectorAll(".markdownIt-TOC a");
+
+  // This should probably be throttled.
+  // Especially because it triggers during smooth scrolling.
+  // https://lodash.com/docs/4.17.10#throttle
+  // You could do like...
+  // window.addEventListener("scroll", () => {
+  //    _.throttle(doThatStuff, 100);
+  // });
+  // Only not doing it here to keep this Pen dependency-free.
+
+  window.addEventListener("scroll", event => {
+    let fromTop = window.scrollY;
+
+    mainNavLinks.forEach((link, index) => {
+      let section = document.getElementById(decodeURI(link.hash).substring(1));
+      let nextSection = null
+      if (mainNavLinks[index + 1]) {
+        nextSection = document.getElementById(decodeURI(mainNavLinks[index + 1].hash).substring(1));
+      }
+      if (section.offsetTop <= fromTop) {
+        if (nextSection) {
+          if (nextSection.offsetTop > fromTop) {
+            link.classList.add("current");
+          } else {
+            link.classList.remove("current");    
+          }
+        } else {
+          link.classList.add("current");
+        }
+      } else {
+        link.classList.remove("current");
+      }
+    });
+  });
+
+</script>
+
+      </div>
+    </div>
+  </body>
+</html>

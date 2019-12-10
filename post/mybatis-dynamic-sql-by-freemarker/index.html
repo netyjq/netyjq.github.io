@@ -1,0 +1,292 @@
+<html>
+  <head>
+    <meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>使用freemarker实现mybatis动态sql | yjq.wiki</title>
+<meta name="description" content="it's never too old to learn" />
+<link rel="shortcut icon" href="https://netyjq.github.io/favicon.ico?v=1575944462433">
+<link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.2/css/all.css" integrity="sha384-fnmOCqbTlWIlj8LyTjo7mOUStjsKC4pOpQbqyi7RrhN7udi9RwhKkMHpvLbHG9Sr" crossorigin="anonymous">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.10.0/katex.min.css">
+<link rel="stylesheet" href="https://netyjq.github.io/styles/main.css">
+
+<script src="https://cdn.bootcss.com/highlight.js/9.12.0/highlight.min.js"></script>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Droid+Serif:400,700">
+
+
+
+  </head>
+  <body>
+    <div class="main">
+      <div class="main-content">
+        <div class="site-header">
+  <a href="https://netyjq.github.io">
+  <img class="avatar" src="https://netyjq.github.io/images/avatar.png?v=1575944462433" alt="">
+  </a>
+  <h1 class="site-title">
+    yjq.wiki
+  </h1>
+  <p class="site-description">
+    it's never too old to learn
+  </p>
+  <div class="menu-container">
+    
+      
+        <a href="/" class="menu">
+          首页
+        </a>
+      
+    
+      
+        <a href="/archives" class="menu">
+          归档
+        </a>
+      
+    
+      
+        <a href="/tags" class="menu">
+          标签
+        </a>
+      
+    
+      
+        <a href="/post/about" class="menu">
+          关于
+        </a>
+      
+    
+  </div>
+  <div class="social-container">
+    
+      
+    
+      
+    
+      
+    
+      
+    
+      
+    
+  </div>
+</div>
+
+        <div class="post-detail">
+          <article class="post">
+            <h2 class="post-title">
+              使用freemarker实现mybatis动态sql
+            </h2>
+            <div class="post-info">
+              <span>
+                2019-06-04
+              </span>
+              <span>
+                4 min read
+              </span>
+              
+                <a href="https://netyjq.github.io/tag/jtyY4O-by5" class="post-tag">
+                  # mybatis
+                </a>
+              
+                <a href="https://netyjq.github.io/tag/WJxxAs-epl" class="post-tag">
+                  # freemarker
+                </a>
+              
+            </div>
+            
+            <div class="post-content-wrapper">
+              <div class="post-content">
+                <p>一般情况下使用mybatis自带的动态标签已经能够完成业务需求，但是假设有这样一个场景：sql是外部传入的，而且是携带参数的，你需要帮其执行并告知结果。</p>
+<p>上个月接到一个数据查询平台的全新项目，需要执行业务方传入的sql与查询参数，然后提交给mybatis执行返回结果。接下来聊聊我是如何实现mybatis的动态sql和执行的。</p>
+<h3 id="原始方式">原始方式</h3>
+<p>一般我们都知道mybatis执行任意sql最简单的方式可以这样做，先在mapper.xml中这么写，</p>
+<pre><code>&lt;select id=&quot;select&quot; resultType=&quot;map&quot;&gt;
+    ${sql}
+&lt;/select&gt;
+</code></pre>
+<p>然后在代码中传入参数</p>
+<pre><code>// ... 略
+
+@Autowired
+private IAppMapper appMapper;
+
+// ... 略
+
+Map&lt;String,String&gt; map = new HashMap&lt;String,String&gt;;
+map.put(&quot;sql&quot;, &quot;select * from app_info where app_id = 1 and name = '数据查询平台'&quot;);
+
+List&lt;AppInfo&gt; appInfoList = appMapper.select(map);
+
+// ... 略
+
+</code></pre>
+<p>这样就可以完成一个简单的<code>sql</code>执行了。</p>
+<h3 id="简单改进">简单改进</h3>
+<p>上一步的<code>app_id</code> 和 <code>name</code>的值都是写死的，如果变成外部传入呢？</p>
+<p>其实这个也非常简单，我们把 <code>sql</code>,<code>name</code>,<code>app_id</code> 都当成条件传入就可以了。</p>
+<pre><code>// ... 略
+
+@Autowired
+private IAppMapper appMapper;
+
+// ... 略
+
+Map&lt;String,String&gt; map = new HashMap&lt;String,String&gt;;
+map.put(&quot;sql&quot;, &quot;select * from app_info where app_id = #{appId} and name = #{name}&quot;);
+map.put(&quot;appId&quot;, &quot;abc&quot;);
+map.put(&quot;name&quot;, &quot;数据查询平台&quot;);
+List&lt;AppInfo&gt; appInfoList = appMapper.select(map);
+
+// ... 略
+
+</code></pre>
+<h3 id="条件动态查询">条件动态查询</h3>
+<p>上一个方案中查询条件是固定的，如何变得灵活一些：当传入了<code>name</code>和<code>appId</code>字段时则参与查询，否则不参与查询？</p>
+<p>我们知道mybatis有一系列的ognl标签来实现动态的条件，让开发者决定某参数是否能参与查询，显然在这里<code>&lt;if&gt;</code>标签是无法传入到上面的<code>sql</code>中。</p>
+<p><code>mybatis</code>处理动态 <code>sql</code> 时，所有动态 <code>sql</code> 的标签都会处理为<code>SqlNode</code>对象，包含<code>${}</code>的也会处理为<code>TextSqlNode</code> 对象。</p>
+<p>如果<code>${sql}</code>中的内容包含嵌套的<code>${}</code>和<code>&lt;if&gt;</code>,<code>&lt;where&gt;</code>等标签，当 <code>mybatis</code>解析 <code>xml</code> 为 <code>SqlNode</code> 对象时，<code>xml</code> <code>&lt;select&gt;</code>元素包含的内容只有<code>${sql}</code>，也就是说只有<code>${sql}</code>会被解析；虽然在运行时这个参数字符串中可能包含的<code>${}</code>和<code>&lt;if&gt;</code>,<code>&lt;where&gt;</code>等标签，但是这都发生在 <code>mybatis</code> 解析后。</p>
+<p>因此当这些内容作为字符串中的一部分出现时，他们不会被特殊处理，他们只是<code>sql</code>中的一部分，只是原样输出，最终交给数据执行将出现语法异常。</p>
+<p>此时可以借助模板标记语言来解决此问题，<code>freemaker</code>是一款流行稳定的模板标记语言，借助<code>freemarker</code>，我们可以把代码做这样的修改：</p>
+<pre><code>// ... 略
+
+@Autowired
+private IAppMapper appMapper
+
+// ... 略
+
+Map&lt;String,String&gt; map = new HashMap&lt;String,String&gt;;
+map.put(&quot;appId&quot;, &quot;abc&quot;);
+map.put(&quot;name&quot;, &quot;数据查询平台&quot;);
+
+String sql = &quot;select * from app_info where 1 = 1 &lt;#if appId??&gt;and app_id = &lt;noparse&gt;#{appId}&lt;/noparse&gt;&lt;/#if&gt; &lt;#if appName??&gt;and app_name = &lt;#noparse&gt;#{name}&lt;/#noparse&gt;&lt;/#if&gt;&quot;;
+
+Configuration cfg = new Configuration(freemarker.template.Configuration.VERSION_2_3_0);
+cfg.setDefaultEncoding(&quot;UTF-8&quot;);
+cfg.setLogTemplateExceptions(false);
+cfg.setTemplateLoader(new StringTemplateLoader());
+
+Template template = cfg.getTemplate(&quot;templateId&quot;);
+template.process(map, out);
+
+// 经过渲染后sql将会变成： select * from app_info where 1=1 and app_id = #{appId} and app_name = #{name}
+
+sql = out.toString();
+
+map.put(&quot;sql&quot;, sql);  
+
+List&lt;AppInfo&gt; appInfoList = appMapper.select(map);
+
+// ... 略
+
+</code></pre>
+<p>这里需要特别注意 <code>#{appId}</code> <code>#{name}</code> 要留给<code>mybatis</code>解析，而不是被<code>freemarker</code>解析，借助<code>&lt;#noparse&gt;&lt;/#noparse&gt;</code> 标签，可以避免<code>freemarker</code>解析<code>#{xxx}</code>和<code>${xxx}</code></p>
+
+              </div>
+              <div class="toc-container">
+                <ul class="markdownIt-TOC">
+<li>
+<ul>
+<li>
+<ul>
+<li><a href="#%E5%8E%9F%E5%A7%8B%E6%96%B9%E5%BC%8F">原始方式</a></li>
+<li><a href="#%E7%AE%80%E5%8D%95%E6%94%B9%E8%BF%9B">简单改进</a></li>
+<li><a href="#%E6%9D%A1%E4%BB%B6%E5%8A%A8%E6%80%81%E6%9F%A5%E8%AF%A2">条件动态查询</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+              </div>
+            </div>
+          </article>
+        </div>
+
+        
+          <div class="next-post">
+            <div class="next">下一篇</div>
+            <a href="https://netyjq.github.io/post/how-to-write-a-technical-solution-document">
+              <h3 class="post-title">
+                如何编写技术方案文档
+              </h3>
+            </a>
+          </div>
+        
+
+        
+          
+            <link rel="stylesheet" href="https://unpkg.com/gitalk/dist/gitalk.css">
+<script src="https://unpkg.com/gitalk/dist/gitalk.min.js"></script>
+
+<div id="gitalk-container"></div>
+
+<script>
+
+  var gitalk = new Gitalk({
+    clientID: '5d6b9c9336c7edc32dce',
+    clientSecret: 'db95541cd744854feb3628bf9efea21b5fad428d',
+    repo: 'netyjq.github.io',
+    owner: 'netyjq',
+    admin: ['netyjq'],
+    id: (location.pathname).substring(0, 49),      // Ensure uniqueness and length less than 50
+    distractionFreeMode: false  // Facebook-like distraction free mode
+  })
+
+  gitalk.render('gitalk-container')
+
+</script>
+
+          
+
+          
+        
+
+        <div class="site-footer">
+  Powered by <a href="https://github.com/netyjq/" target="_blank">netyjq</a> | 
+  <a class="rss" href="https://netyjq.github.io/atom.xml" target="_blank">RSS</a>
+</div>
+
+<script>
+  hljs.initHighlightingOnLoad()
+
+  let mainNavLinks = document.querySelectorAll(".markdownIt-TOC a");
+
+  // This should probably be throttled.
+  // Especially because it triggers during smooth scrolling.
+  // https://lodash.com/docs/4.17.10#throttle
+  // You could do like...
+  // window.addEventListener("scroll", () => {
+  //    _.throttle(doThatStuff, 100);
+  // });
+  // Only not doing it here to keep this Pen dependency-free.
+
+  window.addEventListener("scroll", event => {
+    let fromTop = window.scrollY;
+
+    mainNavLinks.forEach((link, index) => {
+      let section = document.getElementById(decodeURI(link.hash).substring(1));
+      let nextSection = null
+      if (mainNavLinks[index + 1]) {
+        nextSection = document.getElementById(decodeURI(mainNavLinks[index + 1].hash).substring(1));
+      }
+      if (section.offsetTop <= fromTop) {
+        if (nextSection) {
+          if (nextSection.offsetTop > fromTop) {
+            link.classList.add("current");
+          } else {
+            link.classList.remove("current");    
+          }
+        } else {
+          link.classList.add("current");
+        }
+      } else {
+        link.classList.remove("current");
+      }
+    });
+  });
+
+</script>
+
+      </div>
+    </div>
+  </body>
+</html>

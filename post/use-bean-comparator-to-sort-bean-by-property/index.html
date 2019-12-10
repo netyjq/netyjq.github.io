@@ -1,0 +1,317 @@
+<html>
+  <head>
+    <meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>使用BeanComparator对集合按照Bean的属性排序 | yjq.wiki</title>
+<meta name="description" content="it's never too old to learn" />
+<link rel="shortcut icon" href="https://netyjq.github.io/favicon.ico?v=1575944462433">
+<link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.2/css/all.css" integrity="sha384-fnmOCqbTlWIlj8LyTjo7mOUStjsKC4pOpQbqyi7RrhN7udi9RwhKkMHpvLbHG9Sr" crossorigin="anonymous">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.10.0/katex.min.css">
+<link rel="stylesheet" href="https://netyjq.github.io/styles/main.css">
+
+<script src="https://cdn.bootcss.com/highlight.js/9.12.0/highlight.min.js"></script>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Droid+Serif:400,700">
+
+
+
+  </head>
+  <body>
+    <div class="main">
+      <div class="main-content">
+        <div class="site-header">
+  <a href="https://netyjq.github.io">
+  <img class="avatar" src="https://netyjq.github.io/images/avatar.png?v=1575944462433" alt="">
+  </a>
+  <h1 class="site-title">
+    yjq.wiki
+  </h1>
+  <p class="site-description">
+    it's never too old to learn
+  </p>
+  <div class="menu-container">
+    
+      
+        <a href="/" class="menu">
+          首页
+        </a>
+      
+    
+      
+        <a href="/archives" class="menu">
+          归档
+        </a>
+      
+    
+      
+        <a href="/tags" class="menu">
+          标签
+        </a>
+      
+    
+      
+        <a href="/post/about" class="menu">
+          关于
+        </a>
+      
+    
+  </div>
+  <div class="social-container">
+    
+      
+    
+      
+    
+      
+    
+      
+    
+      
+    
+  </div>
+</div>
+
+        <div class="post-detail">
+          <article class="post">
+            <h2 class="post-title">
+              使用BeanComparator对集合按照Bean的属性排序
+            </h2>
+            <div class="post-info">
+              <span>
+                2016-11-23
+              </span>
+              <span>
+                3 min read
+              </span>
+              
+                <a href="https://netyjq.github.io/tag/5uvRnxl2SXU" class="post-tag">
+                  # BeanComparator
+                </a>
+              
+            </div>
+            
+            <div class="post-content-wrapper">
+              <div class="post-content">
+                <p>对List集合 按照Bean的属性排序，用到的蛮多的。写了个demo，直接看代码吧。需要引入 commons-beanutil.jar  和 commons-collections.jar</p>
+<!-- more-->
+<pre><code>package com.xx.xx.test;
+
+import org.apache.commons.beanutils.BeanComparator;
+import org.apache.commons.collections.ComparatorUtils;
+import org.apache.commons.collections.comparators.ComparatorChain;
+import org.apache.commons.collections.comparators.ReverseComparator;
+import org.springframework.util.comparator.ComparableComparator;
+
+import java.util.*;
+
+public class BeanComparatorExample {
+
+
+    public static void main(String []a) {
+
+
+        Person person1 = new Person(9,&quot;person1&quot;,21,new Date());
+        Person person2 = new Person(2,&quot;person2&quot;,50,new Date());
+        Person person3 = new Person(3,&quot;person3&quot;,35,new Date());
+        Person person4 = new Person(4,&quot;person4&quot;,40,new Date());
+        Person person5 = new Person(5,&quot;person5&quot;,21,new Date());
+
+        List&lt;Person&gt; persons = new ArrayList&lt;&gt;();
+
+        persons.add(person1);
+        persons.add(person2);
+        persons.add(person3);
+        persons.add(person4);
+        persons.add(person5);
+
+        Comparator comparator = new ComparableComparator();
+
+        // 允许null        
+        comparator = ComparatorUtils.nullLowComparator(comparator);
+        // 降序
+        comparator = ComparatorUtils.reversedComparator(comparator);
+
+        ArrayList&lt;Object&gt; sortFileds = new ArrayList&lt;&gt;();
+        sortFileds.add(new BeanComparator(&quot;age&quot;));
+        sortFileds.add(new BeanComparator(&quot;name&quot;,comparator));
+        ComparatorChain mutiSort = new ComparatorChain(sortFileds);
+        Collections.sort(persons,mutiSort);
+
+        for (Person person : persons) {
+            System.out.println(person);
+        }
+
+    }
+
+}
+</code></pre>
+<p>简单说明一下：上面的代码是先是以age字段为主，升序排列，然后按照name字段降序排列</p>
+<p>最终打印结果：</p>
+<pre><code>Person{id=5, name='person5', age=21, born=Wed Nov 23 22:35:01 CST 2016}
+Person{id=9, name='person1', age=21, born=Wed Nov 23 22:35:01 CST 2016}
+Person{id=3, name='person3', age=35, born=Wed Nov 23 22:35:01 CST 2016}
+Person{id=4, name='person4', age=40, born=Wed Nov 23 22:35:01 CST 2016}
+Person{id=2, name='person2', age=50, born=Wed Nov 23 22:35:01 CST 2016}
+</code></pre>
+<p>下面是用到的Person类</p>
+<pre><code>package com.xx.xx.test;
+
+import java.util.Date;
+
+public class Person {
+
+    private int id;
+    private String name;
+    private int age;
+    private Date born;
+
+    @Override    public String toString() {
+        return &quot;Person{&quot; +
+                &quot;id=&quot; + id +
+                &quot;, name='&quot; + name + '\'' +
+                &quot;, age=&quot; + age +
+                &quot;, born=&quot; + born +
+                '}';
+    }
+
+    public Person() {
+
+    }
+
+    public Person(int id, String name, int age, Date born) {
+        this.id = id;
+        this.name = name;
+        this.age = age;
+        this.born = born;
+    }
+
+    public int getId() {
+        return id;
+    }
+
+    public void setId(int id) {
+        this.id = id;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public int getAge() {
+        return age;
+    }
+
+    public void setAge(int age) {
+        this.age = age;
+    }
+
+    public Date getBorn() {
+        return born;
+    }
+
+    public void setBorn(Date born) {
+        this.born = born;
+    }
+}
+</code></pre>
+
+              </div>
+              <div class="toc-container">
+                
+              </div>
+            </div>
+          </article>
+        </div>
+
+        
+          <div class="next-post">
+            <div class="next">下一篇</div>
+            <a href="https://netyjq.github.io/post/maven-install-third-party-jar-on-local-repo">
+              <h3 class="post-title">
+                Maven安装第三方Jar包到本地仓库
+              </h3>
+            </a>
+          </div>
+        
+
+        
+          
+            <link rel="stylesheet" href="https://unpkg.com/gitalk/dist/gitalk.css">
+<script src="https://unpkg.com/gitalk/dist/gitalk.min.js"></script>
+
+<div id="gitalk-container"></div>
+
+<script>
+
+  var gitalk = new Gitalk({
+    clientID: '5d6b9c9336c7edc32dce',
+    clientSecret: 'db95541cd744854feb3628bf9efea21b5fad428d',
+    repo: 'netyjq.github.io',
+    owner: 'netyjq',
+    admin: ['netyjq'],
+    id: (location.pathname).substring(0, 49),      // Ensure uniqueness and length less than 50
+    distractionFreeMode: false  // Facebook-like distraction free mode
+  })
+
+  gitalk.render('gitalk-container')
+
+</script>
+
+          
+
+          
+        
+
+        <div class="site-footer">
+  Powered by <a href="https://github.com/netyjq/" target="_blank">netyjq</a> | 
+  <a class="rss" href="https://netyjq.github.io/atom.xml" target="_blank">RSS</a>
+</div>
+
+<script>
+  hljs.initHighlightingOnLoad()
+
+  let mainNavLinks = document.querySelectorAll(".markdownIt-TOC a");
+
+  // This should probably be throttled.
+  // Especially because it triggers during smooth scrolling.
+  // https://lodash.com/docs/4.17.10#throttle
+  // You could do like...
+  // window.addEventListener("scroll", () => {
+  //    _.throttle(doThatStuff, 100);
+  // });
+  // Only not doing it here to keep this Pen dependency-free.
+
+  window.addEventListener("scroll", event => {
+    let fromTop = window.scrollY;
+
+    mainNavLinks.forEach((link, index) => {
+      let section = document.getElementById(decodeURI(link.hash).substring(1));
+      let nextSection = null
+      if (mainNavLinks[index + 1]) {
+        nextSection = document.getElementById(decodeURI(mainNavLinks[index + 1].hash).substring(1));
+      }
+      if (section.offsetTop <= fromTop) {
+        if (nextSection) {
+          if (nextSection.offsetTop > fromTop) {
+            link.classList.add("current");
+          } else {
+            link.classList.remove("current");    
+          }
+        } else {
+          link.classList.add("current");
+        }
+      } else {
+        link.classList.remove("current");
+      }
+    });
+  });
+
+</script>
+
+      </div>
+    </div>
+  </body>
+</html>
