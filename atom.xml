@@ -2,18 +2,18 @@
 <feed xmlns="http://www.w3.org/2005/Atom">
     <id>https://netyjq.github.io</id>
     <title>yjq.wiki</title>
-    <updated>2019-12-10T02:25:50.487Z</updated>
+    <updated>2020-03-14T14:02:15.555Z</updated>
     <generator>https://github.com/jpmonette/feed</generator>
     <link rel="alternate" href="https://netyjq.github.io"/>
     <link rel="self" href="https://netyjq.github.io/atom.xml"/>
     <subtitle>it&apos;s never too old to learn</subtitle>
     <logo>https://netyjq.github.io/images/avatar.png</logo>
     <icon>https://netyjq.github.io/favicon.ico</icon>
-    <rights>All rights reserved 2019, yjq.wiki</rights>
+    <rights>All rights reserved 2020, yjq.wiki</rights>
     <entry>
         <title type="html"><![CDATA[深入理解Spring事务]]></title>
-        <id>https://netyjq.github.io/post/deep-unstanding-of-spring-transaction</id>
-        <link href="https://netyjq.github.io/post/deep-unstanding-of-spring-transaction">
+        <id>https://netyjq.github.io/post/deep-unstanding-of-spring-transaction/</id>
+        <link href="https://netyjq.github.io/post/deep-unstanding-of-spring-transaction/">
         </link>
         <updated>2019-07-21T10:02:31.000Z</updated>
         <summary type="html"><![CDATA[<p>这是在公司做的一次内部分享，内容包含：Spring事务基本认识，相关特性的探索与代码验证，一些使用上的坑以及如何避免。</p>
@@ -52,7 +52,7 @@ try {
 </code></pre>
 <h2 id="声明式事务">声明式事务</h2>
 <h3 id="实现原理">实现原理</h3>
-<figure data-type="image" tabindex="1"><img src="https://docs.spring.io/spring/docs/current/spring-framework-reference/images/tx.png" alt="image"></figure>
+<figure data-type="image" tabindex="1"><img src="https://docs.spring.io/spring/docs/current/spring-framework-reference/images/tx.png" alt="image" loading="lazy"></figure>
 <h3 id="通过xml配置">通过xml配置</h3>
 <p>在 xml 配置中的事务配置信息</p>
 <pre><code class="language-xml">&lt;tx:annotation-driven /&gt;
@@ -147,7 +147,7 @@ public void test() {
 <ul>
 <li>REQUIRED：如果当前存在事务，则加入该事务；如果当前没有事务，则创建一个新的事务。</li>
 </ul>
-<figure data-type="image" tabindex="2"><img src="https://docs.spring.io/spring/docs/current/spring-framework-reference/images/tx_prop_required.png" alt="image"></figure>
+<figure data-type="image" tabindex="2"><img src="https://docs.spring.io/spring/docs/current/spring-framework-reference/images/tx_prop_required.png" alt="image" loading="lazy"></figure>
 <ul>
 <li>SUPPORTS：如果当前存在事务，则加入该事务；如果当前没有事务，则以非事务的方式继续运行。</li>
 <li>MANDATORY：如果当前存在事务，则加入该事务；如果当前没有事务，则抛出异常。</li>
@@ -405,18 +405,18 @@ Bob 账户余额: 3000
 ]]></content>
     </entry>
     <entry>
-        <title type="html"><![CDATA[开源项目——数据中心平台]]></title>
-        <id>https://netyjq.github.io/post/sql-query-data-center</id>
-        <link href="https://netyjq.github.io/post/sql-query-data-center">
+        <title type="html"><![CDATA[开源项目——数据中心查询平台]]></title>
+        <id>https://netyjq.github.io/post/sql-query-data-center/</id>
+        <link href="https://netyjq.github.io/post/sql-query-data-center/">
         </link>
         <updated>2019-06-14T07:33:53.000Z</updated>
-        <content type="html"><![CDATA[<h2 id="项目简介">项目简介</h2>
-<p>一个能实现任意动态sql执行、统一管理、异常监控的数据查询平台。</p>
-<p>https://github.com/netyjq/data-center</p>
+        <content type="html"><![CDATA[<p><a href="https://github.com/netyjq/data-center/blob/master/README_EN.MD">English Document</a></p>
+<h2 id="项目简介">项目简介</h2>
+<p>一个能实现任意sql(动态/静态)执行、统一管理、异常监控的数据查询中台项目，包含前后端，可直接打包运行。</p>
 <h2 id="背景">背景</h2>
-<p>现在业务方每次有数据查询需求，就需要数据中心配合做sql查询，同时提供RPC接口返回DTO数据结构。伸缩性较差，人力成本高。</p>
+<p>公司有个日志数据采集的数据库，每次业务方有数据查询的需求，就需要data-center项目配合做sql查询，同时提供RPC接口返回DTO数据结构。伸缩性较差，人力成本高。</p>
 <h2 id="目标">目标</h2>
-<p>实现一套现代化的数据中心平台，业务方自行维护sql，无需数据中心耦合业务需求。</p>
+<p>实现一套现代化的数据中心查询平台，业务方自行维护sql，无需数据中心耦合业务需求。数据中心提供统一查询数据的RPC接口能力，业务方查询数据如同调用本地方法一样。</p>
 <h2 id="核心需求">核心需求</h2>
 <ol>
 <li>SQL管理</li>
@@ -427,7 +427,7 @@ Bob 账户余额: 3000
 </ol>
 <h2 id="方案">方案</h2>
 <h3 id="设计图">设计图</h3>
-<figure data-type="image" tabindex="1"><img src="http://ww1.sinaimg.cn/large/c9025ee6ly1g2be63rlb4j20l40kpgm4.jpg" alt=""></figure>
+<figure data-type="image" tabindex="1"><img src="https://raw.githubusercontent.com/netyjq/data-center/blob/master/script/design.jpg" alt="" loading="lazy"></figure>
 <h3 id="技术方案">技术方案</h3>
 <h4 id="dubborpc-freemarker解析sql-mybatis执行sql">Dubbo(RPC) + Freemarker(解析SQL) + Mybatis(执行SQL)</h4>
 <p>假设下面的sql需要根据parentId和name动态查询，其中parent_id和name有值传递过来就参与查询，否则不查询</p>
@@ -452,7 +452,7 @@ Bob 账户余额: 3000
 <li>alarm_history 告警记录表 <strong>分多表</strong></li>
 <li>alarm_config 告警配置表</li>
 </ul>
-<figure data-type="image" tabindex="2"><img src="https://raw.githubusercontent.com/netyjq/data-center/master/script/table.jpg" alt=""></figure>
+<figure data-type="image" tabindex="2"><img src="https://raw.githubusercontent.com/netyjq/data-center/blob/master/script/table.jpg" alt="表结构设计" loading="lazy"></figure>
 <h4 id="项目模块">项目模块</h4>
 <ol>
 <li>data-center-admin 管理员后台 部署形式：war</li>
@@ -480,8 +480,8 @@ Bob 账户余额: 3000
 <li>应用与sql间的关系 —— 用于应用方调用权限的判定</li>
 </ol>
 <h2 id="预览">预览</h2>
-<figure data-type="image" tabindex="3"><img src="https://raw.githubusercontent.com/netyjq/data-center/master/script/login.png" alt="登录页"></figure>
-<figure data-type="image" tabindex="4"><img src="https://raw.githubusercontent.com/netyjq/data-center/master/script/index.png" alt="首页"></figure>
+<figure data-type="image" tabindex="3"><img src="https://raw.githubusercontent.com/netyjq/data-center/blob/master/script/login.png" alt="登录页" loading="lazy"></figure>
+<figure data-type="image" tabindex="4"><img src="https://raw.githubusercontent.com/netyjq/data-center/blob/master/script/index.png" alt="首页" loading="lazy"></figure>
 <h2 id="风险点">风险点</h2>
 <ol>
 <li>负载风险：宕机引发整体服务不可用</li>
@@ -493,8 +493,8 @@ Bob 账户余额: 3000
     </entry>
     <entry>
         <title type="html"><![CDATA[使用freemarker实现mybatis动态sql]]></title>
-        <id>https://netyjq.github.io/post/mybatis-dynamic-sql-by-freemarker</id>
-        <link href="https://netyjq.github.io/post/mybatis-dynamic-sql-by-freemarker">
+        <id>https://netyjq.github.io/post/mybatis-dynamic-sql-by-freemarker/</id>
+        <link href="https://netyjq.github.io/post/mybatis-dynamic-sql-by-freemarker/">
         </link>
         <updated>2019-06-04T10:11:22.000Z</updated>
         <content type="html"><![CDATA[<p>一般情况下使用mybatis自带的动态标签已经能够完成业务需求，但是假设有这样一个场景：sql是外部传入的，而且是携带参数的，你需要帮其执行并告知结果。</p>
@@ -585,8 +585,8 @@ List&lt;AppInfo&gt; appInfoList = appMapper.select(map);
     </entry>
     <entry>
         <title type="html"><![CDATA[如何编写技术方案文档]]></title>
-        <id>https://netyjq.github.io/post/how-to-write-a-technical-solution-document</id>
-        <link href="https://netyjq.github.io/post/how-to-write-a-technical-solution-document">
+        <id>https://netyjq.github.io/post/how-to-write-a-technical-solution-document/</id>
+        <link href="https://netyjq.github.io/post/how-to-write-a-technical-solution-document/">
         </link>
         <updated>2019-04-22T02:17:45.000Z</updated>
         <summary type="html"><![CDATA[<p>技术方案文档是软件开发人员一项必备的技能，在我看来技术方案文档就是在项目开发前把潜在的风险和解决问题的思路都梳理清楚，避免开发过程中思路不明确，又或者后期难以维护和拓展。一份好的文档对我们的项目开发无疑是事半功倍的，养成写文档的习惯很重要，写一份思路清晰结构明了的文档更重要，那么问题来了，文档该怎么写呢？</p>
@@ -614,130 +614,9 @@ List&lt;AppInfo&gt; appInfoList = appMapper.select(map);
 ]]></content>
     </entry>
     <entry>
-        <title type="html"><![CDATA[一份来自菜鸟和企朋的面经]]></title>
-        <id>https://netyjq.github.io/post/april-2019-interview-experience</id>
-        <link href="https://netyjq.github.io/post/april-2019-interview-experience">
-        </link>
-        <updated>2019-04-18T12:05:44.000Z</updated>
-        <summary type="html"><![CDATA[<p>本人工作年限3.5年，就职于公司共享服务部，平时主要给团队做一些中间件和工具，也接触一些业务。今年的金三银四，我准备了一番去外面看了看机会。在此记录2019年的2场面试。</p>
-]]></summary>
-        <content type="html"><![CDATA[<p>本人工作年限3.5年，就职于公司共享服务部，平时主要给团队做一些中间件和工具，也接触一些业务。今年的金三银四，我准备了一番去外面看了看机会。在此记录2019年的2场面试。</p>
-<!-- more -->
-<h2 id="阿里巴巴菜鸟">阿里巴巴菜鸟</h2>
-<ol>
-<li>
-<p>说说现在做哪些项目？</p>
-</li>
-<li>
-<p>OpenApI开放平台你做了哪些优化，有哪些成绩？</p>
-</li>
-<li>
-<p>你提到的Dubbo的反序列化和java中的Serializable序列化有社么区别？</p>
-</li>
-<li>
-<p>你刚提到反序列化成HashMap，除了这个有想过其它方案吗？</p>
-</li>
-<li>
-<p>你说你用到了Netty，那你知道NIO\BIO的区别吗？</p>
-</li>
-<li>
-<p>那如果100个链接，NIO、BIO各自需要多少个线程</p>
-</li>
-<li>
-<p>你的项目用的哪种垃圾收集器？哪种垃圾回收算法</p>
-</li>
-<li>
-<p>你还知道哪些垃圾回收算法</p>
-</li>
-<li>
-<p>说说你堆JVM的认识</p>
-</li>
-<li>
-<p>你平时如何处理线上的问题，比如Full GC, 内存，CPU这块</p>
-</li>
-<li>
-<p>如果让你设计一个高并发秒杀系统，你如何设计？</p>
-</li>
-<li>
-<p>你刚提到Zookeeper分布式锁，zk如何实现分布式锁？</p>
-</li>
-<li>
-<p>zk实现分布式锁的底层原理是什么？</p>
-</li>
-<li>
-<p>项目中有用到分表分库吗？谈谈你的设计？</p>
-</li>
-<li>
-<p>你刚讲到取模，一致性Hash算法了解吗？说说原理</p>
-</li>
-<li>
-<p>你的项目用到了哪些领域模型，是如何进行分层设计的？</p>
-</li>
-<li>
-<p>你对你的职业规划是怎么样的？</p>
-</li>
-<li>
-<p>你对你下份工作有哪些期望？</p>
-</li>
-<li>
-<p>业余时间有哪些爱好，学习哪些技术？</p>
-</li>
-<li>
-<p>你现在工作强度大吗？每天大概几点下班？</p>
-</li>
-</ol>
-<p>好了，我问完了，咱们今天先到这儿，我回去和同事商量下，后续再联系你</p>
-<h2 id="企朋">企朋</h2>
-<h3 id="一面-技术面">一面  技术面</h3>
-<ol>
-<li>自我介绍</li>
-<li>配置中心为什么自己实现一套，而不用开源的方案？</li>
-<li>你如何理解配置中心？</li>
-<li>你觉得Zookeeper是用来解决什么问题的？</li>
-<li>为什么用到Netty？是什么样的业务场景？</li>
-<li>你提到的Redis限流是如何实现的？是基于什么模型？你还知道什么方式限流？</li>
-<li>并发包有用到过吗？如何使用线程池？除了ThreadPoolExecutor还有什么方式使用线程池？</li>
-<li>CountDownLatch有用过吗？如果业务执行很长时间会发生什么？如何避免？</li>
-<li>volatile有什么作用？底层是什么原理？</li>
-<li>有没有用过Spring的特性解决一些问题？</li>
-<li>说说SpringBean的生命周期</li>
-<li>如何在Bean初始化和销毁前做一些事情？有实际应用经验吗？</li>
-<li>mysql A、B字段联合索引，<code>where A=xx and B=xx</code>会走索引吗？<code>where B=xx and A=xx</code>会走索引吗？<code>where B=xx</code>会走索引吗？<code>where A=xx</code>会走索引吗？</li>
-<li>mysql索引有哪几种类型？</li>
-<li>mysql索引底层数据结构是什么样的？</li>
-<li>如果一次性取了一个很大的全表数据，数据库会发生什么？</li>
-<li>如果mysql查询特别慢，你如何排查问题？</li>
-<li>类加载机制了解吗？有哪些类加载器？</li>
-<li>双亲委派模型是什么？</li>
-<li>有什么想问我的吗？</li>
-</ol>
-<h3 id="二面-联合创始人面">二面 联合创始人面</h3>
-<ol>
-<li>自我介绍</li>
-<li>项目中OpenAPI工作流程</li>
-<li>OpenAPI token是如何设计的，token被盗用存在什么风险？你有想过如何避免吗？</li>
-<li>OpenAPI调用内部的服务，如果服务响应很慢怎么办？会影响调用其它服务吗？你觉得应该如何处理？</li>
-<li>画下OpenAPI开放平台结构图</li>
-<li>我觉得你最近几份工作时间都不是很长，最近一份工作是什么原因不想待了？</li>
-<li>你大学和工作期间都是怎么学习的？</li>
-<li>你最近在学习哪些东西？</li>
-<li>你对你未来1-3年的规划是什么？</li>
-<li>你觉得架构师是怎样的？</li>
-<li>你觉得你还应该学习或者补充哪些知识？</li>
-<li>你觉得你最擅长的是什么</li>
-<li>你对薪资有什么期望？</li>
-<li>有什么想问我的吗？</li>
-</ol>
-<h2 id="小结">小结</h2>
-<p>其实这些问题都不难，关键是要做充分的准备，除了技术知识的储备，在表达能力上以及一些非技术性问题和聊天也要练习台词和说法方式。</p>
-<p>附上我的面试知识点储备总结：<br>
-<a href="https://github.com/netyjq/Knowledge-System-For-Interview">https://github.com/netyjq/Knowledge-System-For-Interview</a></p>
-]]></content>
-    </entry>
-    <entry>
         <title type="html"><![CDATA[使用VisualVM进行性能分析]]></title>
-        <id>https://netyjq.github.io/post/use-visualvm-to-analyis-performance</id>
-        <link href="https://netyjq.github.io/post/use-visualvm-to-analyis-performance">
+        <id>https://netyjq.github.io/post/use-visualvm-to-analyis-performance/</id>
+        <link href="https://netyjq.github.io/post/use-visualvm-to-analyis-performance/">
         </link>
         <updated>2018-11-19T12:08:26.000Z</updated>
         <summary type="html"><![CDATA[<p>VisualVM是一个集成了命令行JDK工具和轻量级概要分析功能的可视化工具。专为开发和线上运行使用而设计。本文翻译自国外大神greyfocus的博客文章，重点对VisualVM的Sampling(采样)和Profiling(分析)模块有详细的介绍。</p>
@@ -797,8 +676,8 @@ List&lt;AppInfo&gt; appInfoList = appMapper.select(map);
     </entry>
     <entry>
         <title type="html"><![CDATA[dubbo反序列化引发的性能问题]]></title>
-        <id>https://netyjq.github.io/post/an-experience-of-solve-dubbo-deserialization-problem</id>
-        <link href="https://netyjq.github.io/post/an-experience-of-solve-dubbo-deserialization-problem">
+        <id>https://netyjq.github.io/post/an-experience-of-solve-dubbo-deserialization-problem/</id>
+        <link href="https://netyjq.github.io/post/an-experience-of-solve-dubbo-deserialization-problem/">
         </link>
         <updated>2018-11-17T02:19:44.000Z</updated>
         <summary type="html"><![CDATA[<p>完整的记录了一次Dubbo反序列化引发的性能问题经历，从问题排查到最终解决，涉及到性能测试，NIO，Dubbo动态调用，Hessian序列化/反序列化，Java反射等问题。</p>
@@ -807,7 +686,7 @@ List&lt;AppInfo&gt; appInfoList = appMapper.select(map);
 <!-- more -->
 <h3 id="背景">背景</h3>
 <p>在前置机server集群版本进行性能压测的时候，发现性能较差，并发200的情况下，QPS 只有100上下，并且有一定的错误率（超时）。</p>
-<figure data-type="image" tabindex="1"><img src="http://ww1.sinaimg.cn/large/c9025ee6ly1fxa1626s3zj20wr01zt9v.jpg" alt=""></figure>
+<figure data-type="image" tabindex="1"><img src="http://ww1.sinaimg.cn/large/c9025ee6ly1fxa1626s3zj20wr01zt9v.jpg" alt="" loading="lazy"></figure>
 <h3 id="对问题源头进行分析">对问题源头进行分析</h3>
 <p>为确保整个调用链路源头没问题，首先对课程中心RPC接口进行压测，其硬件配置如下 ：</p>
 <pre><code>CPU
@@ -819,14 +698,14 @@ CPU(s):                2
 /dev/mapper/centos-root   34G   24G  9.9G   71% /
 </code></pre>
 <p>压测结果</p>
-<figure data-type="image" tabindex="2"><img src="http://ww1.sinaimg.cn/large/c9025ee6ly1fxa16rsle9j20wn01ujrb.jpg" alt=""></figure>
+<figure data-type="image" tabindex="2"><img src="http://ww1.sinaimg.cn/large/c9025ee6ly1fxa16rsle9j20wn01ujrb.jpg" alt="" loading="lazy"></figure>
 <p>CPU 负载情况</p>
-<figure data-type="image" tabindex="3"><img src="http://ww1.sinaimg.cn/large/c9025ee6ly1fxa17cj7aij20k603l0sq.jpg" alt=""></figure>
+<figure data-type="image" tabindex="3"><img src="http://ww1.sinaimg.cn/large/c9025ee6ly1fxa17cj7aij20k603l0sq.jpg" alt="" loading="lazy"></figure>
 <p>通过直接对课程中心的RPC服务接口进行压测，发现服务源头是OK的，TPS 达到508.5，RPC服务提供方CPU基本被榨干，理论上这台机器足够强悍，TPS还可以更高。前置机之前也测试过，netty的性能毋庸置疑，那么只有统一接入最有可能出现问题。</p>
 <h3 id="对应用自身进行分析">对应用自身进行分析</h3>
 <p>初步分析，统一接入有2个地方可能有性能问题，一个是数据库操作（请求流水表字段过长及表数据条数过多引发慢查询，但测试期间测试库已做清理），一个是RPC动态调用上，于是我把核心逻辑抽出来，去除数据库干扰进行性能测试，得到以下结果：</p>
-<figure data-type="image" tabindex="4"><img src="http://ww1.sinaimg.cn/large/c9025ee6ly1fxa1aw3rk6j20wq02l748.jpg" alt=""></figure>
-<figure data-type="image" tabindex="5"><img src="http://ww1.sinaimg.cn/large/c9025ee6ly1fxa1b6oyubj20kf03it8p.jpg" alt=""></figure>
+<figure data-type="image" tabindex="4"><img src="http://ww1.sinaimg.cn/large/c9025ee6ly1fxa1aw3rk6j20wq02l748.jpg" alt="" loading="lazy"></figure>
+<figure data-type="image" tabindex="5"><img src="http://ww1.sinaimg.cn/large/c9025ee6ly1fxa1b6oyubj20kf03it8p.jpg" alt="" loading="lazy"></figure>
 <p>根据结果可以看到 TPS 只有93，0.0.1%的错误率，看来和数据库并没有多大关系，而且课程中心的RPC服务CPU占用率极低，这进一步让我确认统一接入的问题出在RPC动态调用上。</p>
 <h3 id="找到问题">找到问题</h3>
 <p>在压测过程中发现有一段日志一直打印出来。一开始我以为是统一日志打印出来的，就没太去在意，最后看了源代码后发现这才是真正的问题所在啊！</p>
@@ -839,21 +718,21 @@ java.net.URLClassLoader@3b7541a
 java.lang.ClassNotFoundException: com.bozhong.coursecenter.common.util.ResultMessageBuilder$ResultMessage
 </code></pre>
 <p>顺着提示，找到了 <code>SerializerFactory</code> <code>getDeserializer</code> 这段代码日志打印出来的地方<br>
-<img src="http://ww1.sinaimg.cn/large/c9025ee6ly1fxatswnerbj20vl05r74o.jpg" alt=""></p>
+<img src="http://ww1.sinaimg.cn/large/c9025ee6ly1fxatswnerbj20vl05r74o.jpg" alt="" loading="lazy"></p>
 <p>告警日志打印出来是因为反射时候没有找到类抛出 <code>ClassNotFoundException</code>，因为 <code>Dubbo</code>是使用<code>Hession</code>进行反序列化的，而反序列化的时候会用到反射将二进制流数据转化为<code>Java Object</code>，如果反射成功，<code>Dubbo</code>会缓存在内存里，反之每次调用都会进行反射。</p>
-<figure data-type="image" tabindex="6"><img src="http://ww1.sinaimg.cn/large/c9025ee6ly1fxatthlm30j20o704st8x.jpg" alt=""></figure>
+<figure data-type="image" tabindex="6"><img src="http://ww1.sinaimg.cn/large/c9025ee6ly1fxatthlm30j20o704st8x.jpg" alt="" loading="lazy"></figure>
 <h3 id="对问题结论进行验证">对问题结论进行验证</h3>
 <p>至此问题已经排查到了，正是高并发下频繁的调用反射导致了 CPU 占用飙升并且主要耗费时间都花在了反射下。为了验证这个结论，再次进行性能测试并利用JVM性能分析工具对CPU时间片进行采样分析，得到下图结果：</p>
-<figure data-type="image" tabindex="7"><img src="http://ww1.sinaimg.cn/large/c9025ee6ly1fxattrvan7j21fo0l0k54.jpg" alt=""></figure>
+<figure data-type="image" tabindex="7"><img src="http://ww1.sinaimg.cn/large/c9025ee6ly1fxattrvan7j21fo0l0k54.jpg" alt="" loading="lazy"></figure>
 <p>可以看到<code>com.alibaba.com.caucho.hessian.io.SerializerFactory</code>  <code>getDeserializer</code>这个方法执行过程中 <code>Self Time (CPU)</code> 耗时排在第三位。</p>
 <p>接下来把对方提供的RPC服务jar包加入依赖，再次进行性能测试，得到以下结果：</p>
-<figure data-type="image" tabindex="8"><img src="http://ww1.sinaimg.cn/large/c9025ee6ly1fxatu51za1j20wm01xdfr.jpg" alt=""></figure>
+<figure data-type="image" tabindex="8"><img src="http://ww1.sinaimg.cn/large/c9025ee6ly1fxatu51za1j20wm01xdfr.jpg" alt="" loading="lazy"></figure>
 <p>TPS达到了438.6，接近直接调用的 TPS 508</p>
 <h3 id="深入探究问题">深入探究问题</h3>
 <p>问题总算是找到了，那么如何解决？</p>
 <p>回过头来看这个问题，发现业务是可以用的，只是在并发的情况下会出现性能问题，并引发dubbo超时错误，那么dubbo是如何保证可用的呢？</p>
 <p>找到 <code>SerializerFactory</code> <code>getDeserializer</code>  上一层调用的源码  <code>SerializerFactory</code> <code>readObject</code></p>
-<figure data-type="image" tabindex="9"><img src="http://ww1.sinaimg.cn/large/c9025ee6ly1fxatujsc34j20l90d2t9u.jpg" alt=""></figure>
+<figure data-type="image" tabindex="9"><img src="http://ww1.sinaimg.cn/large/c9025ee6ly1fxatujsc34j20l90d2t9u.jpg" alt="" loading="lazy"></figure>
 <p>通过翻阅源码发现，如果反射Java对象出现<code>ClassNotFoundException</code>时，<code>Dubbo</code>最终会反序列化成<code>HashMap</code>。</p>
 <h3 id="解决问题">解决问题</h3>
 <p>由于统一接入这个项目的特殊性，依赖所有客户端的jar包是不可取的，也违背了 “动态调用” 这个设计初衷，那么解决这个问题有2种方式</p>
@@ -863,9 +742,9 @@ java.lang.ClassNotFoundException: com.bozhong.coursecenter.common.util.ResultMes
 </ol>
 <p>以上2点各有利弊，对于第1种方式而言，代价无疑是巨大的，我个人倾向于第2种方式，对他人无侵入，改动工作量最小，效果最佳。</p>
 <p>以下是我的改造方式 通过修改源码，在 <code>SerializerFactory getDeserializer</code>  开头处加入一段判断逻辑</p>
-<figure data-type="image" tabindex="10"><img src="http://ww1.sinaimg.cn/large/c9025ee6ly1fxatv6b3kbj20nh0gmwfg.jpg" alt=""></figure>
+<figure data-type="image" tabindex="10"><img src="http://ww1.sinaimg.cn/large/c9025ee6ly1fxatv6b3kbj20nh0gmwfg.jpg" alt="" loading="lazy"></figure>
 <p>接下来再次进行性能压测，得到如下结果</p>
-<figure data-type="image" tabindex="11"><img src="http://ww1.sinaimg.cn/large/c9025ee6ly1fxatvdt4rij20wi02bt8n.jpg" alt=""></figure>
+<figure data-type="image" tabindex="11"><img src="http://ww1.sinaimg.cn/large/c9025ee6ly1fxatvdt4rij20wi02bt8n.jpg" alt="" loading="lazy"></figure>
 <p>TPS 516.5  0错误率。</p>
 <p>以上是统一接出性能问题的发现及解决过程。</p>
 <p>注：以上所有压测条件为本地启动demo程序提供http接口， 并发 200，<code>tomcat</code>使用默认配置 <code>maxThreads</code> 200，<code>accpectCount</code> 100， 本机机器<br>
@@ -874,8 +753,8 @@ java.lang.ClassNotFoundException: com.bozhong.coursecenter.common.util.ResultMes
     </entry>
     <entry>
         <title type="html"><![CDATA[Tomcat免路径访问项目启动两次问题]]></title>
-        <id>https://netyjq.github.io/post/three-ways-avoid-tomcat-deploy-war-started-twice</id>
-        <link href="https://netyjq.github.io/post/three-ways-avoid-tomcat-deploy-war-started-twice">
+        <id>https://netyjq.github.io/post/three-ways-avoid-tomcat-deploy-war-started-twice/</id>
+        <link href="https://netyjq.github.io/post/three-ways-avoid-tomcat-deploy-war-started-twice/">
         </link>
         <updated>2018-08-25T02:17:48.000Z</updated>
         <summary type="html"><![CDATA[<p>通常在tomcat中部署war包，如果不做任何配置，是需要加url中加入war包名称的，就像这样：</p>
@@ -923,8 +802,8 @@ java.lang.ClassNotFoundException: com.bozhong.coursecenter.common.util.ResultMes
     </entry>
     <entry>
         <title type="html"><![CDATA[统一网关Zuul]]></title>
-        <id>https://netyjq.github.io/post/introduction-of-zuul-gateway</id>
-        <link href="https://netyjq.github.io/post/introduction-of-zuul-gateway">
+        <id>https://netyjq.github.io/post/introduction-of-zuul-gateway/</id>
+        <link href="https://netyjq.github.io/post/introduction-of-zuul-gateway/">
         </link>
         <updated>2018-06-13T11:06:22.000Z</updated>
         <summary type="html"><![CDATA[<p>Zuul是一种提供动态路由，监控，弹性，安全性等的网关服务。Zuul 提供了四种过滤器的 API，分别为前置（Pre）、后置（Post）、路由（Route）和错误（Error）四种处理方式。</p>
@@ -934,7 +813,7 @@ java.lang.ClassNotFoundException: com.bozhong.coursecenter.common.util.ResultMes
 <h2 id="zuul是什么">Zuul是什么</h2>
 <p>Zuul is a gateway service that provides dynamic routing, monitoring, resiliency, security, and more.</p>
 <p>Zuul是一种提供动态路由，监控，弹性，安全性等的网关服务。</p>
-<figure data-type="image" tabindex="1"><img src="https://camo.githubusercontent.com/4eb7754152028cdebd5c09d1c6f5acc7683f0094/687474703a2f2f6e6574666c69782e6769746875622e696f2f7a75756c2f696d616765732f7a75756c2d726571756573742d6c6966656379636c652e706e67" alt="image"></figure>
+<figure data-type="image" tabindex="1"><img src="https://camo.githubusercontent.com/4eb7754152028cdebd5c09d1c6f5acc7683f0094/687474703a2f2f6e6574666c69782e6769746875622e696f2f7a75756c2f696d616765732f7a75756c2d726571756573742d6c6966656379636c652e706e67" alt="image" loading="lazy"></figure>
 <p>Zuul 提供了四种过滤器的 API，分别为前置（Pre）、后置（Post）、路由（Route）和错误（Error）四种处理方式。</p>
 <p>一个请求会先按顺序通过所有的前置过滤器，之后在路由过滤器中转发给后端应用，得到响应后又会通过所有的后置过滤器，最后响应给客户端。在整个流程中如果发生了异常则会跳转到错误过滤器中。</p>
 <h2 id="应用场景">应用场景</h2>
@@ -954,7 +833,7 @@ java.lang.ClassNotFoundException: com.bozhong.coursecenter.common.util.ResultMes
 <p>这种方式安全等级最高，但是也是最复杂的。如果不是大型API平台或者需要给第三方APP使用的，没必要整这么复杂。</p>
 <p>这里建议使用 Json web token(JWT) 来实现统一鉴权。</p>
 <p>JWT 大致工作流程如下：</p>
-<figure data-type="image" tabindex="2"><img src="https://raw.githubusercontent.com/netyjq/images/master/jwt20.png" alt="image"></figure>
+<figure data-type="image" tabindex="2"><img src="https://raw.githubusercontent.com/netyjq/images/master/jwt20.png" alt="image" loading="lazy"></figure>
 <p>关于JWT的介绍可以参考官网 <a href="https://jwt.io/">https://jwt.io/</a></p>
 <h3 id="动态路由">动态路由</h3>
 <p>通过服务路由的功能，我们在对外提供服务的时候，只需要通过暴露Zuul中配置的调用地址就可以让调用方统一的来访问我们的服务，而不需要了解具体提供服务的主机信息了。在Zuul中提供了两种映射方式：</p>
@@ -1083,8 +962,8 @@ ExceptionMapper 或是 Spring MVC 中的 @ExceptionHandler 一样，在处理流
     </entry>
     <entry>
         <title type="html"><![CDATA[SpringBoot从入门到运用]]></title>
-        <id>https://netyjq.github.io/post/springboot-simple-guide-demo</id>
-        <link href="https://netyjq.github.io/post/springboot-simple-guide-demo">
+        <id>https://netyjq.github.io/post/springboot-simple-guide-demo/</id>
+        <link href="https://netyjq.github.io/post/springboot-simple-guide-demo/">
         </link>
         <updated>2018-05-02T14:05:52.000Z</updated>
         <summary type="html"><![CDATA[<p>Spring Boot可以轻松创建独立的、基于产品级别Spring的应用程序，基于“约定大于配置”的理念，SpringBoot整合了Spring平台和第三方的库，开箱即用，大部分情况下，开发人员只需要少量的配置就可以直接运行。Spring Boot的目的是提供一组工具，以便快速构建容易配置的 Spring 应用程序。</p>
@@ -1433,6 +1312,213 @@ dubbo.protocol.port = 12345
 </code></pre>
 <h3 id="小结">小结</h3>
 <p>以上介绍了SpringBoot的特性及常用框架集成。SpringBoot采用“习惯优于配置”的理念，为广大Java开发者提供了一组开箱即用的工具，大大简化了Java web程序的构建和配置，可广泛应用于生产环境。</p>
+]]></content>
+    </entry>
+    <entry>
+        <title type="html"><![CDATA[大众点评CAT研究]]></title>
+        <id>https://netyjq.github.io/post/simple-guide-of-cat/</id>
+        <link href="https://netyjq.github.io/post/simple-guide-of-cat/">
+        </link>
+        <updated>2018-04-18T01:17:29.000Z</updated>
+        <summary type="html"><![CDATA[<p>CAT(Central Application Tracking)是基于Java开发的实时应用监控平台，为大众点评网提供了全面的监控服务和决策支持。<br>
+CAT作为大众点评网基础监控组件，它已经在中间件框架（MVC框架，RPC框架，数据库框架，缓存框架等）中得到广泛应用，为点评各业务线提供系统的性能指标、健康状况、基础告警等。</p>
+]]></summary>
+        <content type="html"><![CDATA[<p>CAT(Central Application Tracking)是基于Java开发的实时应用监控平台，为大众点评网提供了全面的监控服务和决策支持。<br>
+CAT作为大众点评网基础监控组件，它已经在中间件框架（MVC框架，RPC框架，数据库框架，缓存框架等）中得到广泛应用，为点评各业务线提供系统的性能指标、健康状况、基础告警等。</p>
+<!--more -->
+<h3 id="cat-是什么">CAT 是什么？</h3>
+<p>CAT(Central Application Tracking)是基于Java开发的实时应用监控平台，为大众点评网提供了全面的监控服务和决策支持。<br>
+CAT作为大众点评网基础监控组件，它已经在中间件框架（MVC框架，RPC框架，数据库框架，缓存框架等）中得到广泛应用，为点评各业务线提供系统的性能指标、健康状况、基础告警等。</p>
+<h3 id="简单运用">简单运用</h3>
+<h4 id="运行环境">运行环境</h4>
+<ul>
+<li>Maven 3 （必须）</li>
+<li>Mysql（必须）</li>
+<li>JDK6 或 JDK7 不支持JDK8 （必须）</li>
+<li>Tomact</li>
+</ul>
+<h4 id="下载编译">下载编译</h4>
+<pre><code class="language-html">git clone https://github.com/dianping/cat.git
+
+....
+
+mvn clean install -DskipTests
+</code></pre>
+<h4 id="cat服务端运行部署">CAT服务端运行部署</h4>
+<p>CAT 的配置文件需要放在容器运行环境的根目录下的 <code>data/appdatas/cat</code>下，比如 tomcat 运行在 <code>C:\dev\apache-tomcat-8.5.30</code> 那么配置文件就需要放在 <code>C:\appdatas\cat</code> 下， 确保CAT对该目录有读写权限。</p>
+<p>在部署 <code>cat-home</code> 之前需要配置 <code>client.xml</code>，<code>server.xml</code>, <code>datasource.xml</code> 3个文件，文件存放在项目中的 <code>scripts</code> 目录中。</p>
+<p>具体的文档请参考官网，下面给一份示例</p>
+<p><strong>client.xml</strong></p>
+<pre><code class="language-xml">&lt;?xml version=&quot;1.0&quot; encoding=&quot;utf-8&quot;?&gt;
+
+&lt;config mode=&quot;client&quot; xmlns:xsi=&quot;http://www.w3.org/2001/XMLSchema&quot; xsi:noNamespaceSchemaLocation=&quot;config.xsd&quot;&gt;
+	&lt;servers&gt;
+		&lt;!-- Local mode for development --&gt;
+		&lt;server ip=&quot;172.16.120.31&quot; port=&quot;2280&quot; http-port=&quot;8080&quot; /&gt;
+
+	&lt;/servers&gt;
+&lt;/config&gt;
+</code></pre>
+<p><strong>server.xml</strong></p>
+<pre><code class="language-xml">&lt;?xml version=&quot;1.0&quot; encoding=&quot;utf-8&quot;?&gt;
+&lt;config local-mode=&quot;false&quot; hdfs-machine=&quot;false&quot; job-machine=&quot;true&quot; alert-machine=&quot;true&quot;&gt;
+	&lt;storage  local-base-dir=&quot;/data/appdatas/cat/bucket/&quot; max-hdfs-storage-time=&quot;15&quot; local-report-storage-time=&quot;7&quot; local-logivew-storage-time=&quot;7&quot;&gt;&lt;/storage&gt;
+
+	&lt;console default-domain=&quot;Cat&quot; show-cat-domain=&quot;true&quot;&gt;
+		&lt;remote-servers&gt;172.16.120.31:8080&lt;/remote-servers&gt;
+	&lt;/console&gt;
+
+&lt;/config&gt;
+</code></pre>
+<p><strong>datasource.xml</strong></p>
+<pre><code class="language-xml">&lt;?xml version=&quot;1.0&quot; encoding=&quot;utf-8&quot;?&gt;
+
+&lt;data-sources&gt;
+	&lt;data-source id=&quot;cat&quot;&gt;
+		&lt;maximum-pool-size&gt;3&lt;/maximum-pool-size&gt;
+		&lt;connection-timeout&gt;1s&lt;/connection-timeout&gt;
+		&lt;idle-timeout&gt;10m&lt;/idle-timeout&gt;
+		&lt;statement-cache-size&gt;1000&lt;/statement-cache-size&gt;
+		&lt;properties&gt;
+			&lt;driver&gt;com.mysql.jdbc.Driver&lt;/driver&gt;
+			&lt;url&gt;&lt;![CDATA[jdbc:mysql://172.16.150.110:3306/cat]]&gt;&lt;/url&gt;
+			&lt;user&gt;root&lt;/user&gt;
+			&lt;password&gt;123456&lt;/password&gt;
+			&lt;connectionProperties&gt;&lt;![CDATA[useUnicode=true&amp;autoReconnect=true]]&gt;&lt;/connectionProperties&gt;
+		&lt;/properties&gt;
+	&lt;/data-source&gt;
+	&lt;data-source id=&quot;app&quot;&gt;
+		&lt;maximum-pool-size&gt;3&lt;/maximum-pool-size&gt;
+		&lt;connection-timeout&gt;1s&lt;/connection-timeout&gt;
+		&lt;idle-timeout&gt;10m&lt;/idle-timeout&gt;
+		&lt;statement-cache-size&gt;1000&lt;/statement-cache-size&gt;
+		&lt;properties&gt;
+			&lt;driver&gt;com.mysql.jdbc.Driver&lt;/driver&gt;
+			&lt;url&gt;&lt;![CDATA[jdbc:mysql://172.16.150.110:3306/cat]]&gt;&lt;/url&gt;
+			&lt;user&gt;root&lt;/user&gt;
+			&lt;password&gt;123456&lt;/password&gt;
+			&lt;connectionProperties&gt;&lt;![CDATA[useUnicode=true&amp;autoReconnect=true]]&gt;&lt;/connectionProperties&gt;
+		&lt;/properties&gt;
+	&lt;/data-source&gt;
+&lt;/data-sources&gt;
+</code></pre>
+<p>以上完成后可以打开 ip:port/cat/r/ 查看效果。</p>
+<h4 id="cat客户端部署">CAT客户端部署</h4>
+<ol>
+<li>
+<p>pom加入 <code>cat-client.jar</code> 依赖</p>
+</li>
+<li>
+<p>配置client.xml</p>
+<p>CAT客户端同样需要配置容器运行根目录下的 <code>data/appdatas/cat</code>的读写权限。</p>
+</li>
+</ol>
+<pre><code class="language-xml">&lt;?xml version=&quot;1.0&quot; encoding=&quot;utf-8&quot;?&gt;
+
+&lt;config mode=&quot;client&quot;&gt;
+	&lt;servers&gt;
+		&lt;server ip=&quot;172.16.120.31&quot; port=&quot;2280&quot; http-port=&quot;8080&quot; /&gt;
+	&lt;/servers&gt;
+&lt;/config&gt;
+</code></pre>
+<ol start="3">
+<li>
+<p>配置 app.properties</p>
+<p>最后需要在 <code>src/main/resources/META-INF/</code>文件夹 放置一个<code>app.properties</code>,用于标记客户端身份</p>
+</li>
+</ol>
+<pre><code>app.name=TEST-PROJECT
+</code></pre>
+<h4 id="cat客户端集成">CAT客户端集成</h4>
+<p>部署了客户端后还需要自己去实现监控功能。CAT 本身不提供SpringMVC, MyBatis, DUBBO等 框架或者工具监控的能力，需要使用者自己去埋点实现。</p>
+<ul>
+<li>
+<p>Logview 可视化的调用链路</p>
+</li>
+<li>
+<p>Transaction 监控一段代码运行情况：运行时间统计、次数、错误次数等等</p>
+</li>
+<li>
+<p>Event 记录程序中一个事件记录了多少次，错误了多少次。相比于Transaction，Event没有运行时间统计</p>
+</li>
+<li>
+<p>其他有待深入了解</p>
+</li>
+</ul>
+<h5 id="集成springmvc与mybatis示例">集成SpringMVC与MyBatis示例</h5>
+<p>通过拦截器的方式记录打点，用到了 Transaction 和 Event， 这里写了中文进去，为了便于看清效果</p>
+<p><strong>Spring MVC</strong></p>
+<pre><code class="language-java">public class CatInterceptor implements HandlerInterceptor {
+
+    private ThreadLocal&lt;Transaction&gt; tranLocal = new ThreadLocal&lt;Transaction&gt;();
+
+    @Override
+    public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object o) throws Exception {
+        String uri = request.getRequestURI();
+        // 第一个参数表示Type类型，第二参数表示name名称
+        Transaction t = Cat.newTransaction(&quot;请求路径&quot;, uri);
+        Cat.logEvent(&quot;请求类型&quot;, request.getMethod(), Message.SUCCESS,request.getRequestURL().toString());
+        Cat.logEvent(&quot;请求IP&quot;, request.getMethod(),Message.SUCCESS,request.getRemoteHost());
+        tranLocal.set(t);
+        return true;
+    }
+
+    @Override
+    public void postHandle(HttpServletRequest httpServletRequest, HttpServletResponse httpServletResponse, Object o, ModelAndView modelAndView) throws Exception {
+    }
+
+    @Override
+    public void afterCompletion(HttpServletRequest httpServletRequest, HttpServletResponse httpServletResponse, Object o, Exception e) throws Exception {
+        Transaction t = tranLocal.get();
+        tranLocal.remove();
+        t.setStatus(Transaction.SUCCESS);
+        t.complete();
+    }
+}
+</code></pre>
+<p><strong>MyBatis</strong></p>
+<p>代码篇幅过长，具体可看<strong>源码中框架埋点方案集成</strong>中的介绍</p>
+<p><strong>效果展示</strong></p>
+<p>访问已埋点的客户端路径后，然后打开cat-home服务端查看数据</p>
+<p>查看所有Type</p>
+<figure data-type="image" tabindex="1"><img src="https://raw.githubusercontent.com/netyjq/images/master/cat-1.png" alt="image" loading="lazy"></figure>
+<p>查询Type下的所有Name<br>
+<img src="https://raw.githubusercontent.com/netyjq/images/master/cat-2.png" alt="image" loading="lazy"></p>
+<p>查看 LogView</p>
+<figure data-type="image" tabindex="2"><img src="https://raw.githubusercontent.com/netyjq/images/master/cat-3.png" alt="image" loading="lazy"></figure>
+<h4 id="告警配置">告警配置</h4>
+<ol>
+<li>项目配置信息-项目基本信息</li>
+</ol>
+<figure data-type="image" tabindex="3"><img src="https://raw.githubusercontent.com/netyjq/images/master/cat-4.png" alt="image" loading="lazy"></figure>
+<ol start="2">
+<li>应用监控配置-异常告警配置-异常阈<br>
+<img src="https://raw.githubusercontent.com/netyjq/images/master/cat-6.png" alt="image" loading="lazy"></li>
+</ol>
+<h3 id="小结">小结</h3>
+<p>经过最近3天对 CAT的研究，总结一下CAT的优缺点。</p>
+<p>优点：</p>
+<ul>
+<li>
+<p>中文友好</p>
+<p>社区及相关文档都是中文的，减少了上手成本。</p>
+</li>
+<li>
+<p>报表丰富</p>
+<p>支持多种维度的报表展示 Transation/Event/LogView等</p>
+</li>
+</ul>
+<p>缺点：</p>
+<ul>
+<li>
+<p>集成工作量较大/代码侵入略强</p>
+<p>一个应用如果要集成CAT成本还是很大的，各种东西都是自己埋点实现，一个普通的应用如果包含 MVC, 数据库, RPC, 日志， 缓存等模块，则都需要去实现相关的埋点代码。</p>
+</li>
+<li>
+<p>文档还不够完善</p>
+<p>目前框架集成和监控告警这块，文档比较混乱。</p>
+</li>
+</ul>
 ]]></content>
     </entry>
 </feed>

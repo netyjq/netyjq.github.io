@@ -4,7 +4,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>统一网关Zuul | yjq.wiki</title>
 <meta name="description" content="it's never too old to learn" />
-<link rel="shortcut icon" href="https://netyjq.github.io/favicon.ico?v=1575944462433">
+<link rel="shortcut icon" href="https://netyjq.github.io/favicon.ico?v=1584194441852">
 <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.2/css/all.css" integrity="sha384-fnmOCqbTlWIlj8LyTjo7mOUStjsKC4pOpQbqyi7RrhN7udi9RwhKkMHpvLbHG9Sr" crossorigin="anonymous">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.10.0/katex.min.css">
 <link rel="stylesheet" href="https://netyjq.github.io/styles/main.css">
@@ -20,7 +20,7 @@
       <div class="main-content">
         <div class="site-header">
   <a href="https://netyjq.github.io">
-  <img class="avatar" src="https://netyjq.github.io/images/avatar.png?v=1575944462433" alt="">
+  <img class="avatar" src="https://netyjq.github.io/images/avatar.png?v=1584194441852" alt="">
   </a>
   <h1 class="site-title">
     yjq.wiki
@@ -83,11 +83,11 @@
                 8 min read
               </span>
               
-                <a href="https://netyjq.github.io/tag/VW7OW1JgGG" class="post-tag">
+                <a href="https://netyjq.github.io/tag/VW7OW1JgGG/" class="post-tag">
                   # Zuul
                 </a>
               
-                <a href="https://netyjq.github.io/tag/0qxH4bL0qU" class="post-tag">
+                <a href="https://netyjq.github.io/tag/0qxH4bL0qU/" class="post-tag">
                   # SpringCloud
                 </a>
               
@@ -100,7 +100,7 @@
 <h2 id="zuul是什么">Zuul是什么</h2>
 <p>Zuul is a gateway service that provides dynamic routing, monitoring, resiliency, security, and more.</p>
 <p>Zuul是一种提供动态路由，监控，弹性，安全性等的网关服务。</p>
-<figure data-type="image" tabindex="1"><img src="https://camo.githubusercontent.com/4eb7754152028cdebd5c09d1c6f5acc7683f0094/687474703a2f2f6e6574666c69782e6769746875622e696f2f7a75756c2f696d616765732f7a75756c2d726571756573742d6c6966656379636c652e706e67" alt="image"></figure>
+<figure data-type="image" tabindex="1"><img src="https://camo.githubusercontent.com/4eb7754152028cdebd5c09d1c6f5acc7683f0094/687474703a2f2f6e6574666c69782e6769746875622e696f2f7a75756c2f696d616765732f7a75756c2d726571756573742d6c6966656379636c652e706e67" alt="image" loading="lazy"></figure>
 <p>Zuul 提供了四种过滤器的 API，分别为前置（Pre）、后置（Post）、路由（Route）和错误（Error）四种处理方式。</p>
 <p>一个请求会先按顺序通过所有的前置过滤器，之后在路由过滤器中转发给后端应用，得到响应后又会通过所有的后置过滤器，最后响应给客户端。在整个流程中如果发生了异常则会跳转到错误过滤器中。</p>
 <h2 id="应用场景">应用场景</h2>
@@ -120,7 +120,7 @@
 <p>这种方式安全等级最高，但是也是最复杂的。如果不是大型API平台或者需要给第三方APP使用的，没必要整这么复杂。</p>
 <p>这里建议使用 Json web token(JWT) 来实现统一鉴权。</p>
 <p>JWT 大致工作流程如下：</p>
-<figure data-type="image" tabindex="2"><img src="https://raw.githubusercontent.com/netyjq/images/master/jwt20.png" alt="image"></figure>
+<figure data-type="image" tabindex="2"><img src="https://raw.githubusercontent.com/netyjq/images/master/jwt20.png" alt="image" loading="lazy"></figure>
 <p>关于JWT的介绍可以参考官网 <a href="https://jwt.io/">https://jwt.io/</a></p>
 <h3 id="动态路由">动态路由</h3>
 <p>通过服务路由的功能，我们在对外提供服务的时候，只需要通过暴露Zuul中配置的调用地址就可以让调用方统一的来访问我们的服务，而不需要了解具体提供服务的主机信息了。在Zuul中提供了两种映射方式：</p>
@@ -275,7 +275,7 @@ ExceptionMapper 或是 Spring MVC 中的 @ExceptionHandler 一样，在处理流
         
           <div class="next-post">
             <div class="next">下一篇</div>
-            <a href="https://netyjq.github.io/post/springboot-simple-guide-demo">
+            <a href="https://netyjq.github.io/post/springboot-simple-guide-demo/">
               <h3 class="post-title">
                 SpringBoot从入门到运用
               </h3>

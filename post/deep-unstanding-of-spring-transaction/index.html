@@ -4,7 +4,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>深入理解Spring事务 | yjq.wiki</title>
 <meta name="description" content="it's never too old to learn" />
-<link rel="shortcut icon" href="https://netyjq.github.io/favicon.ico?v=1575944462433">
+<link rel="shortcut icon" href="https://netyjq.github.io/favicon.ico?v=1584194441852">
 <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.2/css/all.css" integrity="sha384-fnmOCqbTlWIlj8LyTjo7mOUStjsKC4pOpQbqyi7RrhN7udi9RwhKkMHpvLbHG9Sr" crossorigin="anonymous">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.10.0/katex.min.css">
 <link rel="stylesheet" href="https://netyjq.github.io/styles/main.css">
@@ -20,7 +20,7 @@
       <div class="main-content">
         <div class="site-header">
   <a href="https://netyjq.github.io">
-  <img class="avatar" src="https://netyjq.github.io/images/avatar.png?v=1575944462433" alt="">
+  <img class="avatar" src="https://netyjq.github.io/images/avatar.png?v=1584194441852" alt="">
   </a>
   <h1 class="site-title">
     yjq.wiki
@@ -83,11 +83,11 @@
                 15 min read
               </span>
               
-                <a href="https://netyjq.github.io/tag/EsArW3ASj" class="post-tag">
+                <a href="https://netyjq.github.io/tag/EsArW3ASj/" class="post-tag">
                   # Spring
                 </a>
               
-                <a href="https://netyjq.github.io/tag/Jh9i_XyujM" class="post-tag">
+                <a href="https://netyjq.github.io/tag/Jh9i_XyujM/" class="post-tag">
                   # 事务
                 </a>
               
@@ -129,7 +129,7 @@ try {
 </code></pre>
 <h2 id="声明式事务">声明式事务</h2>
 <h3 id="实现原理">实现原理</h3>
-<figure data-type="image" tabindex="1"><img src="https://docs.spring.io/spring/docs/current/spring-framework-reference/images/tx.png" alt="image"></figure>
+<figure data-type="image" tabindex="1"><img src="https://docs.spring.io/spring/docs/current/spring-framework-reference/images/tx.png" alt="image" loading="lazy"></figure>
 <h3 id="通过xml配置">通过xml配置</h3>
 <p>在 xml 配置中的事务配置信息</p>
 <pre><code class="language-xml">&lt;tx:annotation-driven /&gt;
@@ -224,7 +224,7 @@ public void test() {
 <ul>
 <li>REQUIRED：如果当前存在事务，则加入该事务；如果当前没有事务，则创建一个新的事务。</li>
 </ul>
-<figure data-type="image" tabindex="2"><img src="https://docs.spring.io/spring/docs/current/spring-framework-reference/images/tx_prop_required.png" alt="image"></figure>
+<figure data-type="image" tabindex="2"><img src="https://docs.spring.io/spring/docs/current/spring-framework-reference/images/tx_prop_required.png" alt="image" loading="lazy"></figure>
 <ul>
 <li>SUPPORTS：如果当前存在事务，则加入该事务；如果当前没有事务，则以非事务的方式继续运行。</li>
 <li>MANDATORY：如果当前存在事务，则加入该事务；如果当前没有事务，则抛出异常。</li>
@@ -534,9 +534,9 @@ Bob 账户余额: 3000
         
           <div class="next-post">
             <div class="next">下一篇</div>
-            <a href="https://netyjq.github.io/post/sql-query-data-center">
+            <a href="https://netyjq.github.io/post/sql-query-data-center/">
               <h3 class="post-title">
-                开源项目——数据中心平台
+                开源项目——数据中心查询平台
               </h3>
             </a>
           </div>

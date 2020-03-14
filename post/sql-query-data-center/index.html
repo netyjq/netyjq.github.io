@@ -2,9 +2,9 @@
   <head>
     <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>开源项目——数据中心平台 | yjq.wiki</title>
+<title>开源项目——数据中心查询平台 | yjq.wiki</title>
 <meta name="description" content="it's never too old to learn" />
-<link rel="shortcut icon" href="https://netyjq.github.io/favicon.ico?v=1575944462433">
+<link rel="shortcut icon" href="https://netyjq.github.io/favicon.ico?v=1584194441852">
 <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.2/css/all.css" integrity="sha384-fnmOCqbTlWIlj8LyTjo7mOUStjsKC4pOpQbqyi7RrhN7udi9RwhKkMHpvLbHG9Sr" crossorigin="anonymous">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.10.0/katex.min.css">
 <link rel="stylesheet" href="https://netyjq.github.io/styles/main.css">
@@ -20,7 +20,7 @@
       <div class="main-content">
         <div class="site-header">
   <a href="https://netyjq.github.io">
-  <img class="avatar" src="https://netyjq.github.io/images/avatar.png?v=1575944462433" alt="">
+  <img class="avatar" src="https://netyjq.github.io/images/avatar.png?v=1584194441852" alt="">
   </a>
   <h1 class="site-title">
     yjq.wiki
@@ -73,7 +73,7 @@
         <div class="post-detail">
           <article class="post">
             <h2 class="post-title">
-              开源项目——数据中心平台
+              开源项目——数据中心查询平台
             </h2>
             <div class="post-info">
               <span>
@@ -83,11 +83,11 @@
                 4 min read
               </span>
               
-                <a href="https://netyjq.github.io/tag/Z9ZclCfk3n" class="post-tag">
+                <a href="https://netyjq.github.io/tag/Z9ZclCfk3n/" class="post-tag">
                   # 个人开源项目
                 </a>
               
-                <a href="https://netyjq.github.io/tag/PCEYG17H6J" class="post-tag">
+                <a href="https://netyjq.github.io/tag/PCEYG17H6J/" class="post-tag">
                   # Github
                 </a>
               
@@ -95,13 +95,13 @@
             
             <div class="post-content-wrapper">
               <div class="post-content">
-                <h2 id="项目简介">项目简介</h2>
-<p>一个能实现任意动态sql执行、统一管理、异常监控的数据查询平台。</p>
-<p>https://github.com/netyjq/data-center</p>
+                <p><a href="https://github.com/netyjq/data-center/blob/master/README_EN.MD">English Document</a></p>
+<h2 id="项目简介">项目简介</h2>
+<p>一个能实现任意sql(动态/静态)执行、统一管理、异常监控的数据查询中台项目，包含前后端，可直接打包运行。</p>
 <h2 id="背景">背景</h2>
-<p>现在业务方每次有数据查询需求，就需要数据中心配合做sql查询，同时提供RPC接口返回DTO数据结构。伸缩性较差，人力成本高。</p>
+<p>公司有个日志数据采集的数据库，每次业务方有数据查询的需求，就需要data-center项目配合做sql查询，同时提供RPC接口返回DTO数据结构。伸缩性较差，人力成本高。</p>
 <h2 id="目标">目标</h2>
-<p>实现一套现代化的数据中心平台，业务方自行维护sql，无需数据中心耦合业务需求。</p>
+<p>实现一套现代化的数据中心查询平台，业务方自行维护sql，无需数据中心耦合业务需求。数据中心提供统一查询数据的RPC接口能力，业务方查询数据如同调用本地方法一样。</p>
 <h2 id="核心需求">核心需求</h2>
 <ol>
 <li>SQL管理</li>
@@ -112,7 +112,7 @@
 </ol>
 <h2 id="方案">方案</h2>
 <h3 id="设计图">设计图</h3>
-<figure data-type="image" tabindex="1"><img src="http://ww1.sinaimg.cn/large/c9025ee6ly1g2be63rlb4j20l40kpgm4.jpg" alt=""></figure>
+<figure data-type="image" tabindex="1"><img src="https://raw.githubusercontent.com/netyjq/data-center/blob/master/script/design.jpg" alt="" loading="lazy"></figure>
 <h3 id="技术方案">技术方案</h3>
 <h4 id="dubborpc-freemarker解析sql-mybatis执行sql">Dubbo(RPC) + Freemarker(解析SQL) + Mybatis(执行SQL)</h4>
 <p>假设下面的sql需要根据parentId和name动态查询，其中parent_id和name有值传递过来就参与查询，否则不查询</p>
@@ -137,7 +137,7 @@
 <li>alarm_history 告警记录表 <strong>分多表</strong></li>
 <li>alarm_config 告警配置表</li>
 </ul>
-<figure data-type="image" tabindex="2"><img src="https://raw.githubusercontent.com/netyjq/data-center/master/script/table.jpg" alt=""></figure>
+<figure data-type="image" tabindex="2"><img src="https://raw.githubusercontent.com/netyjq/data-center/blob/master/script/table.jpg" alt="表结构设计" loading="lazy"></figure>
 <h4 id="项目模块">项目模块</h4>
 <ol>
 <li>data-center-admin 管理员后台 部署形式：war</li>
@@ -165,8 +165,8 @@
 <li>应用与sql间的关系 —— 用于应用方调用权限的判定</li>
 </ol>
 <h2 id="预览">预览</h2>
-<figure data-type="image" tabindex="3"><img src="https://raw.githubusercontent.com/netyjq/data-center/master/script/login.png" alt="登录页"></figure>
-<figure data-type="image" tabindex="4"><img src="https://raw.githubusercontent.com/netyjq/data-center/master/script/index.png" alt="首页"></figure>
+<figure data-type="image" tabindex="3"><img src="https://raw.githubusercontent.com/netyjq/data-center/blob/master/script/login.png" alt="登录页" loading="lazy"></figure>
+<figure data-type="image" tabindex="4"><img src="https://raw.githubusercontent.com/netyjq/data-center/blob/master/script/index.png" alt="首页" loading="lazy"></figure>
 <h2 id="风险点">风险点</h2>
 <ol>
 <li>负载风险：宕机引发整体服务不可用</li>
@@ -215,7 +215,7 @@
         
           <div class="next-post">
             <div class="next">下一篇</div>
-            <a href="https://netyjq.github.io/post/mybatis-dynamic-sql-by-freemarker">
+            <a href="https://netyjq.github.io/post/mybatis-dynamic-sql-by-freemarker/">
               <h3 class="post-title">
                 使用freemarker实现mybatis动态sql
               </h3>

@@ -4,7 +4,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>SpringBoot自动化注解及执行流程分析 | yjq.wiki</title>
 <meta name="description" content="it's never too old to learn" />
-<link rel="shortcut icon" href="https://netyjq.github.io/favicon.ico?v=1575944462433">
+<link rel="shortcut icon" href="https://netyjq.github.io/favicon.ico?v=1584194441852">
 <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.2/css/all.css" integrity="sha384-fnmOCqbTlWIlj8LyTjo7mOUStjsKC4pOpQbqyi7RrhN7udi9RwhKkMHpvLbHG9Sr" crossorigin="anonymous">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.10.0/katex.min.css">
 <link rel="stylesheet" href="https://netyjq.github.io/styles/main.css">
@@ -20,7 +20,7 @@
       <div class="main-content">
         <div class="site-header">
   <a href="https://netyjq.github.io">
-  <img class="avatar" src="https://netyjq.github.io/images/avatar.png?v=1575944462433" alt="">
+  <img class="avatar" src="https://netyjq.github.io/images/avatar.png?v=1584194441852" alt="">
   </a>
   <h1 class="site-title">
     yjq.wiki
@@ -83,7 +83,7 @@
                 6 min read
               </span>
               
-                <a href="https://netyjq.github.io/tag/7enpM4R7WB" class="post-tag">
+                <a href="https://netyjq.github.io/tag/7enpM4R7WB/" class="post-tag">
                   # SpringBoot
                 </a>
               
@@ -140,9 +140,9 @@ protected List&lt;String&gt; getCandidateConfigurations(AnnotationMetadata metad
 }
 </code></pre>
 <p>主要就是使用Spring 4 提供的的<code>SpringFactoriesLoader</code>工具类。通过<code>SpringFactoriesLoader.loadFactoryNames()</code>读取了ClassPath下面的<code>META-INF/spring.factories</code>文件。<br>
-<img src="https://img.alicdn.com/imgextra/i2/831148069/TB29911XvAPyuJjy0FcXXbCzpXa_!!831148069.png" alt=""></p>
+<img src="https://img.alicdn.com/imgextra/i2/831148069/TB29911XvAPyuJjy0FcXXbCzpXa_!!831148069.png" alt="" loading="lazy"></p>
 <p><code>spring.factories</code> 是一个典型的properties 文件，通过 key - value 的形式配置。</p>
-<figure data-type="image" tabindex="1"><img src="https://img.alicdn.com/imgextra/i1/831148069/TB2p3vnXD3myKJjSZFCXXbXxXXa_!!831148069.png" alt=""></figure>
+<figure data-type="image" tabindex="1"><img src="https://img.alicdn.com/imgextra/i1/831148069/TB2p3vnXD3myKJjSZFCXXbXxXXa_!!831148069.png" alt="" loading="lazy"></figure>
 <h3 id="configuation">@Configuation</h3>
 <p>从<code>spring-boot-autoconfigure-1.5.3.RELEASE.jar</code>中的<code>spring.factories</code>文件随便找一个Configuration，看看他是如何自动加载bean的</p>
 <p>打开 <code>JdbcTemplateAutoConfiguration.class</code> 查看源码</p>
@@ -193,7 +193,7 @@ public class JdbcTemplateAutoConfiguration {
 <p>这样做的方式是为了保证 在满足相关条件的时候，对应的Bean才会被创建，这样可以保证某些bean在没满足特定条件的情况下就可以不必初始化，避免在bean初始化过程中由于条件不足，导致应用启动失败。</p>
 <h3 id="总结">总结</h3>
 <p>至此，我们可以总结一下Spring Boot的自动化配置的实现：</p>
-<figure data-type="image" tabindex="2"><img src="http://www.hollischuang.com/wp-content/uploads/2017/03/r.png" alt=""></figure>
+<figure data-type="image" tabindex="2"><img src="http://www.hollischuang.com/wp-content/uploads/2017/03/r.png" alt="" loading="lazy"></figure>
 <h2 id="springapplication-执行流程分析">SpringApplication 执行流程分析</h2>
 <blockquote>
 <p>以下内容摘自 《SpringBoot揭秘快速构建为服务体系》 第三章</p>
@@ -248,7 +248,7 @@ public class JdbcTemplateAutoConfiguration {
 </ol>
 <h3 id="总结-2">总结</h3>
 <p>SpringBoot 应用启动的逻辑可以精简为以下的流程：</p>
-<figure data-type="image" tabindex="3"><img src="http://7xqch5.com1.z0.glb.clouddn.com/springboot3-3.jpg" alt=""></figure>
+<figure data-type="image" tabindex="3"><img src="http://7xqch5.com1.z0.glb.clouddn.com/springboot3-3.jpg" alt="" loading="lazy"></figure>
 
               </div>
               <div class="toc-container">
@@ -281,7 +281,7 @@ public class JdbcTemplateAutoConfiguration {
         
           <div class="next-post">
             <div class="next">下一篇</div>
-            <a href="https://netyjq.github.io/post/springboot-maven-archetype">
+            <a href="https://netyjq.github.io/post/springboot-maven-archetype/">
               <h3 class="post-title">
                 开源项目——SpringBoot Maven 脚手架
               </h3>
